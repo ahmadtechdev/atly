@@ -1,0 +1,91 @@
+/*
+|--------------------------------------------------------------------------
+| ATLY design tokens — single source of truth for the landing theme
+|--------------------------------------------------------------------------
+| Override in .env via ATLY_THEME_* only if you add a build step; prefer
+| editing these values for visual changes.
+*/
+
+@theme {
+    /* Brand palette */
+    --color-atly-surface: #f4eeff;
+    --color-atly-muted: #dcd6f7;
+    --color-atly-accent: #a6b1e1;
+    --color-atly-ink: #424874;
+    --color-atly-ink-soft: color-mix(in srgb, #424874 75%, white);
+    --color-atly-accent-strong: color-mix(in srgb, #a6b1e1 85%, #424874);
+
+    /* Semantic aliases */
+    --color-atly-bg: var(--color-atly-surface);
+    --color-atly-card: #ffffff;
+    --color-atly-border: color-mix(in srgb, #a6b1e1 35%, #dcd6f7);
+    --color-atly-primary: var(--color-atly-ink);
+    --color-atly-primary-hover: color-mix(in srgb, #424874 90%, black);
+
+    /* Typography */
+    --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+    /* Spacing & shape */
+    --radius-atly: 1rem;
+    --radius-atly-lg: 1.5rem;
+    --shadow-atly: 0 4px 24px -4px color-mix(in srgb, #424874 12%, transparent);
+    --shadow-atly-lg: 0 20px 50px -12px color-mix(in srgb, #424874 18%, transparent);
+}
+
+:root {
+    --atly-gradient-hero: linear-gradient(
+        145deg,
+        var(--color-atly-surface) 0%,
+        var(--color-atly-muted) 45%,
+        color-mix(in srgb, var(--color-atly-accent) 40%, var(--color-atly-surface)) 100%
+    );
+    --atly-gradient-cta: linear-gradient(
+        135deg,
+        var(--color-atly-ink) 0%,
+        color-mix(in srgb, var(--color-atly-ink) 70%, var(--color-atly-accent)) 100%
+    );
+    --atly-gradient-glow: radial-gradient(
+        ellipse 80% 60% at 50% -20%,
+        color-mix(in srgb, var(--color-atly-accent) 50%, transparent),
+        transparent
+    );
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-atly-bg text-atly-ink antialiased;
+        font-family: var(--font-sans);
+    }
+
+    ::selection {
+        background-color: color-mix(in srgb, var(--color-atly-accent) 60%, white);
+        color: var(--color-atly-ink);
+    }
+}
+
+@layer utilities {
+    .font-display {
+        font-family: var(--font-display);
+    }
+
+    .bg-atly-gradient-hero {
+        background: var(--atly-gradient-hero);
+    }
+
+    .bg-atly-gradient-cta {
+        background: var(--atly-gradient-cta);
+    }
+
+    .bg-atly-glow {
+        background-image: var(--atly-gradient-glow);
+    }
+
+    .text-balance {
+        text-wrap: balance;
+    }
+}
