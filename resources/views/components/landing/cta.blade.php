@@ -3,10 +3,10 @@
         <div class="relative overflow-hidden rounded-atly-lg bg-atly-gradient-cta px-8 py-16 text-center shadow-atly-lg sm:px-16 sm:py-20">
             <div class="pointer-events-none absolute inset-0 bg-atly-glow opacity-40" aria-hidden="true"></div>
             <div class="relative">
-                <h2 class="font-display text-3xl font-bold tracking-tight text-atly-surface sm:text-4xl text-balance">
+                <h2 class="font-display text-3xl font-bold tracking-tight text-atly-cta-fg sm:text-4xl text-balance">
                     Ready to work smarter with {{ config('atly.name') }}?
                 </h2>
-                <p class="mx-auto mt-4 max-w-xl text-lg text-atly-muted">
+                <p class="mx-auto mt-4 max-w-xl text-lg text-atly-cta-muted">
                     {{ config('atly.slogan') }} — join thousands who have already upgraded how they manage tasks.
                 </p>
                 <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

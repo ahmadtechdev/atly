@@ -21,6 +21,10 @@
     --color-atly-border: color-mix(in srgb, #a6b1e1 35%, #dcd6f7);
     --color-atly-primary: var(--color-atly-ink);
     --color-atly-primary-hover: color-mix(in srgb, #424874 90%, black);
+    --color-atly-contrast-bg: #424874;
+    --color-atly-contrast-fg: #f4eeff;
+    --color-atly-cta-fg: #f4eeff;
+    --color-atly-cta-muted: #dcd6f7;
 
     /* Typography */
     --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
@@ -52,6 +56,41 @@
     );
 }
 
+html.dark {
+    --color-atly-surface: #16172a;
+    --color-atly-muted: #252840;
+    --color-atly-accent: #8b97cc;
+    --color-atly-ink: #eae8f4;
+    --color-atly-ink-soft: color-mix(in srgb, #eae8f4 68%, #16172a);
+    --color-atly-accent-strong: color-mix(in srgb, #a6b1e1 80%, #eae8f4);
+    --color-atly-bg: var(--color-atly-surface);
+    --color-atly-card: #1e2035;
+    --color-atly-border: color-mix(in srgb, #8b97cc 28%, #252840);
+    --color-atly-primary: var(--color-atly-ink);
+    --color-atly-primary-hover: color-mix(in srgb, #eae8f4 88%, white);
+    --color-atly-contrast-bg: #a6b1e1;
+    --color-atly-contrast-fg: #16172a;
+    --color-atly-cta-fg: #f4eeff;
+    --color-atly-cta-muted: color-mix(in srgb, #dcd6f7 75%, #16172a);
+
+    --atly-gradient-hero: linear-gradient(
+        145deg,
+        #16172a 0%,
+        #252840 45%,
+        color-mix(in srgb, #424874 55%, #16172a) 100%
+    );
+    --atly-gradient-cta: linear-gradient(
+        135deg,
+        #2a2d4a 0%,
+        color-mix(in srgb, #424874 75%, #8b97cc) 100%
+    );
+    --atly-gradient-glow: radial-gradient(
+        ellipse 80% 60% at 50% -20%,
+        color-mix(in srgb, #8b97cc 35%, transparent),
+        transparent
+    );
+}
+
 @layer base {
     html {
         scroll-behavior: smooth;
@@ -64,6 +103,11 @@
 
     ::selection {
         background-color: color-mix(in srgb, var(--color-atly-accent) 60%, white);
+        color: var(--color-atly-ink);
+    }
+
+    html.dark ::selection {
+        background-color: color-mix(in srgb, var(--color-atly-accent) 50%, #16172a);
         color: var(--color-atly-ink);
     }
 }
