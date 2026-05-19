@@ -51,7 +51,7 @@ class EmailVerificationController extends Controller
 
     public function resend(Request $request): RedirectResponse
     {
-        $request->validate(['email' => ['required', 'email', 'exists:users,email']]);
+        $request->validate(['email' => ['required', 'email']]);
 
         $user = User::query()->where('email', $request->string('email'))->firstOrFail();
 

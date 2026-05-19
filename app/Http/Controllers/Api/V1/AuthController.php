@@ -59,7 +59,7 @@ class AuthController extends Controller
 
     public function resendVerification(Request $request): JsonResponse
     {
-        $request->validate(['email' => ['required', 'email', 'exists:users,email']]);
+        $request->validate(['email' => ['required', 'email']]);
 
         $user = User::query()->where('email', $request->string('email'))->firstOrFail();
 

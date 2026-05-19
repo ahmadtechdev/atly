@@ -6,10 +6,12 @@ use App\Enums\VerificationCodeType;
 use App\Mail\VerificationCodeMail;
 use App\Models\User;
 use App\Models\VerificationCode;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class VerificationCodeService
 {
@@ -20,30 +22,48 @@ class VerificationCodeService
 
     public function send(User $user, VerificationCodeType $type): void
     {
-        $this->ensureNotRateLimited($user, $type);
+        $lock = Cache::lock($this->sendLockKey($user, $type), 30);
 
-        $plainCode = $this->generatePlainCode();
+        if (! $lock->get()) {
+            throw ValidationException::withMessages([
+                'email' => ['A verification code is already being sent. Please wait a moment and try again.'],
+            ]);
+        }
 
-        VerificationCode::query()
-            ->where('user_id', $user->id)
-            ->where('type', $type->value)
-            ->delete();
+        try {
+            $this->ensureNotRateLimited($user, $type);
 
-        VerificationCode::query()->create([
-            'user_id' => $user->id,
-            'type' => $type->value,
-            'code' => Hash::make($plainCode),
-            'expires_at' => now()->addMinutes($this->expiryMinutes),
-        ]);
+            $plainCode = $this->generatePlainCode();
 
-        Mail::to($user->email)->send(new VerificationCodeMail(
-            user: $user,
-            plainCode: $plainCode,
-            type: $type,
-            expiresInMinutes: $this->expiryMinutes,
-        ));
+            VerificationCode::query()
+                ->where('user_id', $user->id)
+                ->where('type', $type->value)
+                ->delete();
 
-        RateLimiter::hit($this->rateLimitKey($user, $type), $this->expiryMinutes * 60);
+            $record = VerificationCode::query()->create([
+                'user_id' => $user->id,
+                'type' => $type->value,
+                'code' => Hash::make($plainCode),
+                'expires_at' => now()->addMinutes($this->expiryMinutes),
+            ]);
+
+            try {
+                Mail::to($user->email)->send(new VerificationCodeMail(
+                    user: $user,
+                    plainCode: $plainCode,
+                    type: $type,
+                    expiresInMinutes: $this->expiryMinutes,
+                ));
+            } catch (Throwable $exception) {
+                $record->delete();
+
+                throw $exception;
+            }
+
+            RateLimiter::hit($this->rateLimitKey($user, $type), $this->expiryMinutes * 60);
+        } finally {
+            $lock->release();
+        }
     }
 
     public function verify(User $user, string $plainCode, VerificationCodeType $type): bool
@@ -99,5 +119,10 @@ class VerificationCodeService
     private function rateLimitKey(User $user, VerificationCodeType $type): string
     {
         return "verification-code:{$type->value}:{$user->id}";
+    }
+
+    private function sendLockKey(User $user, VerificationCodeType $type): string
+    {
+        return "verification-code-send:{$type->value}:{$user->id}";
     }
 }
