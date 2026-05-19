@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Task extends Model
 {
@@ -21,6 +23,7 @@ class Task extends Model
         'description',
         'status',
         'priority',
+        'start_date',
         'due_date',
         'completed_at',
     ];
@@ -30,6 +33,7 @@ class Task extends Model
         return [
             'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
+            'start_date' => 'date',
             'due_date' => 'date',
             'completed_at' => 'datetime',
         ];
@@ -38,6 +42,11 @@ class Task extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TaskAttachment::class);
     }
 
     public function isOverdue(): bool
@@ -65,6 +74,14 @@ class Task extends Model
 
             if ($task->status !== TaskStatus::Completed) {
                 $task->completed_at = null;
+            }
+        });
+
+        static::deleting(function (Task $task): void {
+            $task->loadMissing('attachments');
+
+            foreach ($task->attachments as $attachment) {
+                Storage::disk('public')->delete($attachment->path);
             }
         });
     }

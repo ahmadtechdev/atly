@@ -3,7 +3,7 @@
         <h2 class="font-display text-xl font-bold text-atly-ink">Edit task</h2>
         <p class="mt-1 text-sm text-atly-ink-soft">Update task details.</p>
 
-        <form method="POST" action="{{ route('tasks.update', $task) }}" class="mt-6 space-y-6">
+        <form method="POST" action="{{ route('tasks.update', $task) }}" enctype="multipart/form-data" class="mt-6 space-y-6">
             @csrf
             @method('PUT')
             @include('tasks._form', ['task' => $task, 'statuses' => $statuses, 'priorities' => $priorities])

@@ -11,6 +11,18 @@
             @isset($actions)
                 <div class="hidden sm:flex">{{ $actions }}</div>
             @endisset
+            <a
+                href="{{ route('profile.edit') }}"
+                class="flex items-center gap-2 rounded-xl border border-atly-border p-1 pr-2.5 transition hover:bg-atly-muted/50 sm:pr-3"
+                title="Edit profile"
+            >
+                @if (auth()->user()->avatar_url)
+                    <img src="{{ auth()->user()->avatar_url }}" alt="" class="size-9 rounded-lg object-cover">
+                @else
+                    <span class="flex size-9 items-center justify-center rounded-lg bg-atly-contrast-bg text-xs font-bold text-atly-contrast-fg">{{ auth()->user()->initials() }}</span>
+                @endif
+                <span class="hidden max-w-[8rem] truncate text-sm font-medium text-atly-ink md:inline">{{ auth()->user()->name }}</span>
+            </a>
             <x-theme.toggle />
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

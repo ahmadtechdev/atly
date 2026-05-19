@@ -3,7 +3,7 @@
         <h2 class="font-display text-xl font-bold text-atly-ink">Create task</h2>
         <p class="mt-1 text-sm text-atly-ink-soft">Add a new task to your workspace.</p>
 
-        <form method="POST" action="{{ route('tasks.store') }}" class="mt-6 space-y-6">
+        <form method="POST" action="{{ route('tasks.store') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
             @csrf
             @include('tasks._form', ['statuses' => $statuses, 'priorities' => $priorities])
 

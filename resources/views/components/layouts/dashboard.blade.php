@@ -40,5 +40,20 @@
             </main>
         </div>
     </div>
+
+    @include('tasks.partials.quick-modal')
+
+    @auth
+        <script>
+            window.atlyTasks = {
+                indexUrl: @json(route('tasks.index')),
+                storeUrl: @json(route('tasks.store')),
+                tasksUrl: @json(route('tasks.index')),
+                csrf: @json(csrf_token()),
+            };
+        </script>
+    @endauth
+
+    @stack('scripts')
 </body>
 </html>

@@ -24,7 +24,12 @@ class UpdateTaskRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::enum(TaskStatus::class)],
             'priority' => ['required', Rule::enum(TaskPriority::class)],
-            'due_date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,zip'],
+            'remove_attachments' => ['nullable', 'array'],
+            'remove_attachments.*' => ['integer', 'exists:task_attachments,id'],
         ];
     }
 }

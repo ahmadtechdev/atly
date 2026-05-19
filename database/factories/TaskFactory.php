@@ -25,6 +25,7 @@ class TaskFactory extends Factory
             'description' => fake()->optional(0.6)->paragraph(),
             'status' => $status,
             'priority' => fake()->randomElement(TaskPriority::cases()),
+            'start_date' => fake()->optional(0.5)->dateTimeBetween('-2 weeks', '+1 week'),
             'due_date' => fake()->optional(0.8)->dateTimeBetween('-1 week', '+3 weeks'),
             'completed_at' => $status === TaskStatus::Completed ? now() : null,
         ];

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,5 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
-    Route::resource('tasks', TaskController::class)->except(['show']);
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::resource('tasks', TaskController::class);
 });

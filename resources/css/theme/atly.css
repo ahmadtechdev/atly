@@ -153,3 +153,7 @@ body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-nav-link {
 body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-brand {
     justify-content: center;
 }
+
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-task-add {
+    display: none;
+}

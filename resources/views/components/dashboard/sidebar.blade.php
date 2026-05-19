@@ -2,6 +2,7 @@
     $nav = [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home', 'active' => request()->routeIs('dashboard')],
         ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => 'tasks', 'active' => request()->routeIs('tasks.*')],
+        ['label' => 'Profile', 'route' => 'profile.edit', 'icon' => 'profile', 'active' => request()->routeIs('profile.*')],
     ];
 @endphp
 
@@ -19,25 +20,54 @@
     <nav class="flex-1 space-y-1 px-3 py-4" aria-label="Dashboard">
         <p class="sidebar-section-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-atly-ink-soft">Menu</p>
         @foreach ($nav as $item)
-            <a
-                href="{{ route($item['route']) }}"
-                @class([
-                    'sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
-                    'bg-atly-muted text-atly-ink' => $item['active'],
-                    'text-atly-ink-soft hover:bg-atly-muted/60 hover:text-atly-ink' => ! $item['active'],
-                ])
-            >
-                @if ($item['icon'] === 'home')
-                    <svg class="size-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                    </svg>
-                @else
-                    <svg class="size-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c1.01-.049 1.959-.218 2.816-.608a48.114 48.114 0 0 0 3.487 0 2.916 2.916 0 0 0 2.166 1.607m-9.75 8.25h7.5m-7.5 3H12" />
-                    </svg>
-                @endif
-                <span class="sidebar-label">{{ $item['label'] }}</span>
-            </a>
+            @if ($item['icon'] === 'tasks')
+                <div class="flex items-center gap-1">
+                    <a
+                        href="{{ route($item['route']) }}"
+                        @class([
+                            'sidebar-nav-link flex flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                            'bg-atly-muted text-atly-ink' => $item['active'],
+                            'text-atly-ink-soft hover:bg-atly-muted/60 hover:text-atly-ink' => ! $item['active'],
+                        ])
+                    >
+                        <svg class="size-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c1.01-.049 1.959-.218 2.816-.608a48.114 48.114 0 0 0 3.487 0 2.916 2.916 0 0 0 2.166 1.607m-9.75 8.25h7.5m-7.5 3H12" />
+                        </svg>
+                        <span class="sidebar-label">{{ $item['label'] }}</span>
+                    </a>
+                    <button
+                        type="button"
+                        data-open-task-modal
+                        class="sidebar-task-add flex size-9 shrink-0 items-center justify-center rounded-xl bg-atly-contrast-bg text-atly-contrast-fg shadow-sm transition hover:scale-105"
+                        title="Add task"
+                        aria-label="Add new task"
+                    >
+                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </button>
+                </div>
+            @else
+                <a
+                    href="{{ route($item['route']) }}"
+                    @class([
+                        'sidebar-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition',
+                        'bg-atly-muted text-atly-ink' => $item['active'],
+                        'text-atly-ink-soft hover:bg-atly-muted/60 hover:text-atly-ink' => ! $item['active'],
+                    ])
+                >
+                    @if ($item['icon'] === 'home')
+                        <svg class="size-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                    @else
+                        <svg class="size-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                    @endif
+                    <span class="sidebar-label">{{ $item['label'] }}</span>
+                </a>
+            @endif
         @endforeach
     </nav>
 
