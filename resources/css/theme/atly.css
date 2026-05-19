@@ -133,3 +133,23 @@ html.dark {
         text-wrap: balance;
     }
 }
+
+/* Dashboard sidebar collapse */
+body[data-sidebar-collapsed='true'] #dashboard-sidebar {
+    width: 5rem;
+}
+
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-label,
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-brand-text,
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-section-title {
+    display: none;
+}
+
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-nav-link {
+    justify-content: center;
+    padding-inline: 0.75rem;
+}
+
+body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-brand {
+    justify-content: center;
+}

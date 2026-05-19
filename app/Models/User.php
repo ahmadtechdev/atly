@@ -38,6 +38,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(VerificationCode::class);
     }
 
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     public function hasVerifiedEmail(): bool
     {
         return $this->email_verified_at !== null;

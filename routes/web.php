@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,10 +32,9 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [ResetPasswordController::class, 'store'])->name('password.update');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
-    Route::get('dashboard', DashboardController::class)
-        ->middleware('verified')
-        ->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::resource('tasks', TaskController::class)->except(['show']);
 });
