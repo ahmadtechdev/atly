@@ -67,7 +67,17 @@ class Task extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (Task $task): void {
+            if ($task->start_date === null) {
+                $task->start_date = now()->toDateString();
+            }
+        });
+
         static::saving(function (Task $task): void {
+            if ($task->start_date === null) {
+                $task->start_date = now()->toDateString();
+            }
+
             if ($task->status === TaskStatus::Completed && $task->completed_at === null) {
                 $task->completed_at = now();
             }

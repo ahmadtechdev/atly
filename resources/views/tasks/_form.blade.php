@@ -44,7 +44,7 @@
     </div>
 
     <div class="grid gap-5 sm:grid-cols-2">
-        <x-auth.input name="start_date" label="Start date (optional)" type="date" :value="old('start_date', $task?->start_date?->format('Y-m-d'))" :required="false" />
+        <x-auth.input name="start_date" label="Start date" type="date" :value="old('start_date', $task?->start_date?->format('Y-m-d') ?? now()->format('Y-m-d'))" />
         <x-auth.input name="due_date" label="Due date (optional)" type="date" :value="old('due_date', $task?->due_date?->format('Y-m-d'))" :required="false" />
     </div>
 

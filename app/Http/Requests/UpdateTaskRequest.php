@@ -9,6 +9,13 @@ use Illuminate\Validation\Rule;
 
 class UpdateTaskRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('start_date')) {
+            $this->merge(['start_date' => now()->toDateString()]);
+        }
+    }
+
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('task'));
@@ -24,7 +31,7 @@ class UpdateTaskRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::enum(TaskStatus::class)],
             'priority' => ['required', Rule::enum(TaskPriority::class)],
-            'start_date' => ['nullable', 'date'],
+            'start_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,zip'],

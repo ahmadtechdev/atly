@@ -39,5 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('tasks/{task}/start', [TaskController::class, 'start'])->name('tasks.start');
+    Route::patch('tasks/{task}/toggle-complete', [TaskController::class, 'toggleComplete'])->name('tasks.toggle-complete');
     Route::resource('tasks', TaskController::class);
 });

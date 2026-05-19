@@ -157,3 +157,12 @@ body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-brand {
 body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-task-add {
     display: none;
 }
+
+/* Task detail: description scrolls vertically only, text wraps */
+.task-detail-description {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
