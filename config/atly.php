@@ -26,8 +26,8 @@ return [
     */
 
     'links' => [
-        'login' => env('ATLY_LOGIN_URL', '#'),
-        'register' => env('ATLY_REGISTER_URL', '#'),
+        'login' => env('ATLY_LOGIN_URL', '/login'),
+        'register' => env('ATLY_REGISTER_URL', '/register'),
     ],
 
     /*
