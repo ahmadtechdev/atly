@@ -55,6 +55,21 @@ class Task extends Model
         return $this->hasMany(TaskAttachment::class);
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
+    public function totalTrackedSeconds(): int
+    {
+        return (int) $this->timeEntries->sum(fn (TimeEntry $entry) => $entry->elapsedSeconds());
+    }
+
+    public function runningTimeEntry(): ?TimeEntry
+    {
+        return $this->timeEntries->firstWhere('ended_at', null);
+    }
+
     public function isOverdue(): bool
     {
         return $this->due_date !== null

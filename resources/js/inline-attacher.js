@@ -5,6 +5,14 @@ function escapeHtml(value) {
     return el.innerHTML;
 }
 
+function clampLabel(value, max = 30) {
+    if (!value) {
+        return '';
+    }
+
+    return value.length > max ? `${value.slice(0, max)}...` : value;
+}
+
 function debounce(fn, delay = 200) {
     let timer;
 
@@ -57,23 +65,23 @@ function setupAttacher(root) {
         href: root.dataset.currentHref || '',
     };
 
-    root.classList.add('relative', 'inline-flex');
+    root.classList.add('relative', 'inline-flex', 'min-w-0', 'max-w-full');
 
     const renderTrigger = () => {
         if (state.id) {
             return `
-                <button type="button" data-attacher-trigger class="group/attach inline-flex w-fit max-w-full items-center gap-1.5 rounded-full bg-atly-muted/50 px-2 py-0.5 text-[11px] font-medium text-atly-ink-soft transition hover:bg-atly-muted/80 hover:text-atly-ink">
+                <button type="button" data-attacher-trigger class="group/attach inline-flex w-fit max-w-full min-w-0 items-center gap-1.5 rounded-full bg-atly-muted/50 px-2 py-0.5 text-[11px] font-medium text-atly-ink-soft transition hover:bg-atly-muted/80 hover:text-atly-ink">
                     <span class="size-1.5 shrink-0 rounded-full ${dotClass(state.color)}"></span>
-                    <span class="truncate">${escapeHtml(state.label)}</span>
+                    <span class="min-w-0 truncate">${escapeHtml(clampLabel(state.label))}</span>
                     <svg class="size-3 shrink-0 opacity-60 transition group-hover/attach:opacity-100" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
                 </button>
             `;
         }
 
         return `
-            <button type="button" data-attacher-trigger class="inline-flex w-fit items-center gap-1 rounded-full border border-dashed border-atly-border px-2 py-0.5 text-[11px] font-medium text-atly-ink-soft/80 transition hover:border-atly-accent hover:text-atly-ink">
+            <button type="button" data-attacher-trigger class="inline-flex w-fit max-w-full items-center gap-1 rounded-full border border-dashed border-atly-border px-2 py-0.5 text-[11px] font-medium text-atly-ink-soft/80 transition hover:border-atly-accent hover:text-atly-ink">
                 <svg class="size-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                <span>Add ${escapeHtml(entityLabel)}</span>
+                <span class="truncate">Add ${escapeHtml(entityLabel)}</span>
             </button>
         `;
     };
@@ -114,7 +122,7 @@ function setupAttacher(root) {
                     ? '<svg class="ml-auto size-3 shrink-0 text-atly-accent-strong" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-7.5" /></svg>'
                     : '';
 
-                rows.push(`<li><button type="button" data-attacher-option data-value="${item.id}" data-label="${escapeHtml(item.name)}" data-color="${escapeHtml(color)}" class="flex w-full items-center gap-2 px-3 py-1.5 text-left ${isSelected ? 'bg-atly-muted/30 text-atly-ink' : 'text-atly-ink hover:bg-atly-muted/40'}"><span class="size-2 shrink-0 rounded-full ${dotClass(color)}"></span><span class="truncate">${escapeHtml(item.name)}</span>${selectedMark || subtitle}</button></li>`);
+                rows.push(`<li><button type="button" data-attacher-option data-value="${item.id}" data-label="${escapeHtml(item.name)}" data-color="${escapeHtml(color)}" class="flex w-full items-center gap-2 px-3 py-1.5 text-left ${isSelected ? 'bg-atly-muted/30 text-atly-ink' : 'text-atly-ink hover:bg-atly-muted/40'}"><span class="size-2 shrink-0 rounded-full ${dotClass(color)}"></span><span class="min-w-0 flex-1 truncate">${escapeHtml(clampLabel(item.name))}</span>${selectedMark || subtitle}</button></li>`);
             });
         }
 

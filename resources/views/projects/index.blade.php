@@ -1,7 +1,7 @@
 <x-layouts.dashboard title="Projects">
     <div class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-sm text-atly-ink-soft">{{ $projects->total() }} {{ $projects->total() === 1 ? 'project' : 'projects' }}</p>
+            <p class="text-sm text-atly-ink-soft">{{ $totalCount }} {{ $totalCount === 1 ? 'project' : 'projects' }}</p>
             <button
                 type="button"
                 data-open-project-modal
@@ -31,7 +31,10 @@
         </div>
 
         <div id="projects-list-wrapper" class="space-y-3">
-            @include('projects.partials.list', ['projects' => $projects])
+            @include('projects.partials.list', [
+                'activeProjects' => $activeProjects,
+                'completedProjects' => $completedProjects,
+            ])
         </div>
     </div>
 </x-layouts.dashboard>

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
@@ -30,6 +31,14 @@ class ProjectFactory extends Factory
         return $this->state(fn () => [
             'user_id' => $workspace->user_id,
             'workspace_id' => $workspace->id,
+        ]);
+    }
+
+    public function completed(): static
+    {
+        return $this->state(fn () => [
+            'status' => ProjectStatus::Completed->value,
+            'completed_at' => now()->subDays(fake()->numberBetween(1, 30)),
         ]);
     }
 }

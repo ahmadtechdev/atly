@@ -50,6 +50,44 @@ function renderTaskPrimaryAction(task) {
     return `<button type="button" data-toggle-complete data-complete-url="${task.complete_url}" data-is-completed="${isCompleted ? '1' : '0'}" class="flex w-full items-center gap-3 rounded-xl border border-atly-border bg-atly-surface px-3 py-2.5 text-left text-sm transition hover:bg-atly-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atly-accent/40"><span data-complete-indicator class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${isCompleted ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' : 'border-atly-border bg-atly-card'}">${isCompleted ? '<svg class="size-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-7.5"/></svg>' : ''}</span><span class="font-medium text-atly-ink">${isCompleted ? 'Mark as incomplete' : 'Mark as complete'}</span></button>`;
 }
 
+function renderTaskTimeChip(task, size = 'sm') {
+    const tt = task.time_tracking || {};
+    const sizeClasses = size === 'lg' ? 'px-3 py-1.5 text-xs' : 'px-2 py-0.5 text-[10px]';
+    const iconSize = size === 'lg' ? 'size-3.5' : 'size-3';
+
+    if (tt.is_running && tt.stop_url) {
+        return `<button type="button" data-track-toggle data-track-action="stop" data-track-url="${tt.stop_url}" data-task-time-running data-started-at-ms="${tt.running_started_at_unix_ms}" data-base-seconds="${tt.base_seconds}" class="group/track inline-flex items-center gap-1 rounded-full bg-emerald-100 ring-1 ring-emerald-300 font-medium text-emerald-800 transition hover:bg-emerald-200 hover:ring-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800 ${sizeClasses}" title="Stop tracking" aria-label="Stop tracking"><span class="relative inline-flex size-1.5"><span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-75"></span><span class="relative inline-flex size-1.5 rounded-full bg-emerald-500"></span></span><span data-task-time-label class="tabular-nums">${escapeHtml(tt.total_label || '0m')}</span><svg class="${iconSize} opacity-70 group-hover/track:opacity-100" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>`;
+    }
+
+    if (tt.can_track && tt.start_url) {
+        const label = tt.has_entries ? tt.total_label : 'Track';
+        const titleText = tt.has_entries ? 'Resume tracking' : 'Start tracking';
+
+        return `<button type="button" data-track-toggle data-track-action="start" data-track-url="${tt.start_url}" data-task-id="${task.id}" class="group/track inline-flex items-center gap-1 rounded-full border border-dashed border-atly-border bg-transparent font-medium text-atly-ink-soft transition hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-200 ${sizeClasses}" title="${titleText}" aria-label="${titleText}"><svg class="${iconSize}" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72c0 .79.87 1.27 1.54.84l10.79-6.86c.62-.39.62-1.29 0-1.68L9.54 4.3C8.87 3.87 8 4.35 8 5.14z"/></svg><span class="tabular-nums">${escapeHtml(label)}</span></button>`;
+    }
+
+    if (tt.has_entries) {
+        return `<span class="inline-flex items-center gap-1 rounded-full bg-atly-muted/60 font-medium text-atly-ink-soft ${sizeClasses}" title="Time tracked"><svg class="${iconSize}" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span class="tabular-nums">${escapeHtml(tt.total_label)}</span></span>`;
+    }
+
+    return `<span class="inline-flex items-center gap-1 italic text-atly-ink-soft/70 ${sizeClasses}" title="No time tracked">Not tracked</span>`;
+}
+
+function renderTimeTrackingDetail(task) {
+    const tt = task.time_tracking || {};
+
+    if (!tt.can_track && !tt.has_entries) {
+        return '';
+    }
+
+    return `
+        <div class="space-y-1.5">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Time tracking</p>
+            <div data-task-time-chip data-task-id="${task.id}">${renderTaskTimeChip(task, 'lg')}</div>
+        </div>
+    `;
+}
+
 function renderProjectAttacher(task) {
     const searchUrl = window.atlyProjects?.searchUrl || '';
     const updateUrl = task.update_project_url || '';
@@ -102,6 +140,7 @@ function renderTaskDetail(task) {
             </div>
             ${task.assignee ? `<div class="flex items-center gap-2" title="${escapeHtml(task.assignee.name)}">${assigneeAvatarHtml(task.assignee)}<span class="min-w-0 truncate text-sm font-medium text-atly-ink">${escapeHtml(task.assignee.name)}</span></div>` : ''}
             ${renderProjectAttacher(task)}
+            ${renderTimeTrackingDetail(task)}
             <div>
                 <h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-atly-ink-soft">Description</h4>
                 ${task.description
@@ -169,20 +208,37 @@ export function initTasks() {
 
     let activeTaskId = null;
 
-    const openModal = () => {
+    const projectPicker = () => modal?.querySelector('[data-searchable-picker][data-name="project_id"]');
+
+    const openModal = (prefill = {}) => {
         modal?.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+
+        if (prefill.projectId) {
+            window.atlySetSearchablePicker?.(projectPicker(), {
+                id: prefill.projectId,
+                label: prefill.projectLabel || '',
+                color: prefill.projectColor || '',
+            });
+        }
     };
 
     const closeModal = () => {
         modal?.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
         quickForm?.reset();
+        window.atlySetSearchablePicker?.(projectPicker(), { id: '', label: '', color: '' });
         document.getElementById('task-modal-errors')?.classList.add('hidden');
     };
 
     document.querySelectorAll('[data-open-task-modal]').forEach((button) => {
-        button.addEventListener('click', openModal);
+        button.addEventListener('click', () => {
+            openModal({
+                projectId: button.dataset.prefillProjectId,
+                projectLabel: button.dataset.prefillProjectLabel,
+                projectColor: button.dataset.prefillProjectColor,
+            });
+        });
     });
 
     document.querySelectorAll('[data-close-task-modal]').forEach((button) => {
@@ -221,6 +277,7 @@ export function initTasks() {
             listWrapper.innerHTML = data.html;
             bindListEvents();
             window.atlyInitAttachers?.(listWrapper);
+            window.atlyTickTaskTimers?.();
 
             if (activeTaskId) {
                 highlightActiveTask(activeTaskId);
@@ -305,6 +362,13 @@ export function initTasks() {
             statusBadge.className = `inline-flex whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold sm:flex sm:w-full sm:justify-center ${task.status_class}`;
             statusBadge.setAttribute('data-task-status-badge', '');
         }
+
+        const timeCell = row.querySelector('[data-task-time-cell]');
+
+        if (timeCell) {
+            timeCell.innerHTML = renderTaskTimeChip(task, 'sm');
+            window.atlyTickTaskTimers?.();
+        }
     }
 
     function applyTaskToDetail(task) {
@@ -375,6 +439,60 @@ export function initTasks() {
             applyTaskToDetail(task);
         }
     }
+
+    async function toggleTracking(button) {
+        const url = button.dataset.trackUrl;
+        const action = button.dataset.trackAction;
+
+        if (!url) {
+            return;
+        }
+
+        button.setAttribute('disabled', 'disabled');
+        button.classList.add('opacity-60');
+
+        try {
+            let response;
+
+            if (action === 'start') {
+                const formData = new FormData();
+                formData.append('task_id', button.dataset.taskId || '');
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': config.csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        Accept: 'application/json',
+                    },
+                    body: formData,
+                });
+            } else {
+                response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'X-CSRF-TOKEN': config.csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        Accept: 'application/json',
+                    },
+                });
+            }
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.task && String(activeTaskId) === String(data.task.id)) {
+                applyTaskToDetail(data.task);
+            }
+
+            await refreshList();
+        } finally {
+            button.removeAttribute?.('disabled');
+            button.classList?.remove('opacity-60');
+        }
+    }
     function highlightActiveTask(taskId) {
         document.querySelectorAll('.task-row').forEach((item) => {
             const isActive = item.dataset.taskId === String(taskId);
@@ -429,6 +547,16 @@ export function initTasks() {
                 return;
             }
 
+            const trackButton = event.target.closest('[data-track-toggle]');
+
+            if (trackButton) {
+                event.stopPropagation();
+                event.preventDefault();
+                toggleTracking(trackButton);
+
+                return;
+            }
+
             const startButton = event.target.closest('[data-start-task]');
 
             if (startButton) {
@@ -459,7 +587,7 @@ export function initTasks() {
         });
 
         listWrapper.addEventListener('keydown', (event) => {
-            if (event.target.closest('[data-inline-attacher]')) {
+            if (event.target.closest('[data-inline-attacher]') || event.target.closest('[data-track-toggle]')) {
                 return;
             }
 
@@ -513,6 +641,15 @@ export function initTasks() {
         if (completeButton && !completeButton.closest('#tasks-list')) {
             event.preventDefault();
             toggleTaskComplete(completeButton);
+
+            return;
+        }
+
+        const trackButton = event.target.closest('[data-track-toggle]');
+
+        if (trackButton && !trackButton.closest('#tasks-list')) {
+            event.preventDefault();
+            toggleTracking(trackButton);
         }
     });
 

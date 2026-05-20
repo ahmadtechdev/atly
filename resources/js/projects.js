@@ -19,20 +19,37 @@ export function initProjects() {
     const listWrapper = document.getElementById('projects-list-wrapper');
     const searchInput = document.getElementById('project-search');
 
-    const openModal = () => {
+    const workspacePicker = () => modal?.querySelector('[data-searchable-picker][data-name="workspace_id"]');
+
+    const openModal = (prefill = {}) => {
         modal?.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
+
+        if (prefill.workspaceId) {
+            window.atlySetSearchablePicker?.(workspacePicker(), {
+                id: prefill.workspaceId,
+                label: prefill.workspaceLabel || '',
+                color: prefill.workspaceColor || '',
+            });
+        }
     };
 
     const closeModal = () => {
         modal?.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
         form?.reset();
+        window.atlySetSearchablePicker?.(workspacePicker(), { id: '', label: '', color: '' });
         document.getElementById('project-modal-errors')?.classList.add('hidden');
     };
 
     document.querySelectorAll('[data-open-project-modal]').forEach((button) => {
-        button.addEventListener('click', openModal);
+        button.addEventListener('click', () => {
+            openModal({
+                workspaceId: button.dataset.prefillWorkspaceId,
+                workspaceLabel: button.dataset.prefillWorkspaceLabel,
+                workspaceColor: button.dataset.prefillWorkspaceColor,
+            });
+        });
     });
 
     document.querySelectorAll('[data-close-project-modal]').forEach((button) => {
@@ -44,6 +61,33 @@ export function initProjects() {
             closeModal();
         }
     });
+
+    const deleteModal = document.getElementById('project-delete-modal');
+
+    if (deleteModal) {
+        const openDelete = () => {
+            deleteModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        };
+        const closeDelete = () => {
+            deleteModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        document.querySelectorAll('[data-open-project-delete]').forEach((button) => {
+            button.addEventListener('click', openDelete);
+        });
+
+        document.querySelectorAll('[data-close-project-delete]').forEach((button) => {
+            button.addEventListener('click', closeDelete);
+        });
+
+        deleteModal.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeDelete();
+            }
+        });
+    }
 
     const refreshList = async (url = null) => {
         if (!listWrapper) {

@@ -7,9 +7,9 @@ use App\Enums\TaskStatus;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
-use App\Models\TaskAttachment;
 use App\Models\User;
 use App\Services\TaskAttachmentService;
+use App\Services\TaskPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +23,33 @@ class TaskController extends Controller
         private readonly TaskAttachmentService $attachmentService,
     ) {
         $this->authorizeResource(Task::class, 'task');
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $search = trim((string) $request->string('search'));
+
+        $tasks = Task::query()
+            ->forUser($user)
+            ->with('project:id,name,color')
+            ->when($request->filled('project_id'), fn ($q) => $q->where('project_id', (int) $request->input('project_id')))
+            ->when($search !== '', fn ($q) => $q->where('title', 'like', "%{$search}%"))
+            ->when(! $request->boolean('include_completed'), fn ($q) => $q->where('status', '!=', TaskStatus::Completed->value))
+            ->latest()
+            ->limit(50)
+            ->get(['id', 'title', 'project_id']);
+
+        return response()->json([
+            'results' => $tasks->map(fn (Task $task) => [
+                'id' => $task->id,
+                'name' => $task->title,
+                'subtitle' => $task->project?->name,
+                'color' => $task->project?->color,
+            ])->values(),
+        ]);
     }
 
     public function index(Request $request): View|JsonResponse
@@ -200,7 +227,7 @@ class TaskController extends Controller
 
         $query = Task::query()
             ->forUser($user)
-            ->with(['attachments', 'user', 'project.workspace'])
+            ->with(['attachments', 'user', 'project.workspace', 'timeEntries'])
             ->latest();
 
         if ($request->filled('status')) {
@@ -236,56 +263,6 @@ class TaskController extends Controller
      */
     private function taskPayload(Task $task): array
     {
-        $task->loadMissing(['attachments', 'user', 'project.workspace']);
-
-        return [
-            'id' => $task->id,
-            'title' => $task->title,
-            'description' => $task->description,
-            'status' => $task->status->value,
-            'status_label' => $task->status->label(),
-            'status_class' => $task->status->colorClass(),
-            'is_pending' => $task->status === TaskStatus::Pending,
-            'is_in_progress' => $task->status === TaskStatus::InProgress,
-            'is_completed' => $task->status === TaskStatus::Completed,
-            'can_complete' => $task->status !== TaskStatus::Pending,
-            'priority' => $task->priority->value,
-            'priority_label' => $task->priority->label(),
-            'priority_class' => $task->priority->colorClass(),
-            'priority_dot' => $task->priority->dotClass(),
-            'start_date' => $task->start_date?->format('M j, Y'),
-            'due_date' => $task->due_date?->format('M j, Y'),
-            'is_overdue' => $task->isOverdue(),
-            'edit_url' => route('tasks.edit', $task),
-            'delete_url' => route('tasks.destroy', $task),
-            'start_url' => route('tasks.start', $task),
-            'complete_url' => route('tasks.toggle-complete', $task),
-            'update_project_url' => route('tasks.update-project', $task),
-            'assignee' => [
-                'name' => $task->user->name,
-                'initials' => $task->user->initials(),
-                'avatar_url' => $task->user->avatar_url,
-            ],
-            'project' => $task->project ? [
-                'id' => $task->project->id,
-                'name' => $task->project->name,
-                'full_name' => $task->project->fullName(),
-                'color' => $task->project->color,
-                'url' => route('projects.show', $task->project),
-                'workspace' => $task->project->workspace ? [
-                    'id' => $task->project->workspace->id,
-                    'name' => $task->project->workspace->name,
-                    'color' => $task->project->workspace->color,
-                    'url' => route('workspaces.show', $task->project->workspace),
-                ] : null,
-            ] : null,
-            'attachments' => $task->attachments->map(fn (TaskAttachment $file) => [
-                'id' => $file->id,
-                'name' => $file->original_name,
-                'url' => $file->url(),
-                'is_image' => $file->isImage(),
-                'size' => number_format($file->size / 1024, 1).' KB',
-            ]),
-        ];
+        return TaskPresenter::payload($task);
     }
 }

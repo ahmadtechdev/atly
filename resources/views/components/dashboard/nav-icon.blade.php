@@ -21,6 +21,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5M9 12h1.5m-1.5 5.25h1.5M13.5 6.75H15M13.5 12H15m-1.5 5.25H15M5.25 21v-3.375c0-.621.504-1.125 1.125-1.125h11.25c.621 0 1.125.504 1.125 1.125V21" />
         </svg>
         @break
+    @case('timer')
+        <svg {{ $attributes->merge(['class' => 'size-5 shrink-0']) }} fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        @break
     @case('profile')
     @default
         <svg {{ $attributes->merge(['class' => 'size-5 shrink-0']) }} fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">

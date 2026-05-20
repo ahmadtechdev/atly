@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
@@ -11,7 +13,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
@@ -26,10 +30,12 @@ class ProjectController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $query = Project::query()
+        $baseQuery = fn () => Project::query()
             ->forUser($user)
             ->with('workspace:id,name,color')
-            ->withCount('tasks')
+            ->withCount(['tasks', 'tasks as completed_tasks_count' => function (Builder $q) {
+                $q->where('status', TaskStatus::Completed->value);
+            }])
             ->when($request->filled('workspace_id'), function (Builder $q) use ($request) {
                 $value = $request->input('workspace_id');
 
@@ -48,16 +54,22 @@ class ProjectController extends Controller
             })
             ->orderBy('name');
 
-        $projects = $query->paginate(15)->withQueryString();
+        $activeProjects = $baseQuery()->active()->get();
+        $completedProjects = $baseQuery()->completed()->get();
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('projects.partials.list', compact('projects'))->render(),
+                'html' => view('projects.partials.list', [
+                    'activeProjects' => $activeProjects,
+                    'completedProjects' => $completedProjects,
+                ])->render(),
             ]);
         }
 
         return view('projects.index', [
-            'projects' => $projects,
+            'activeProjects' => $activeProjects,
+            'completedProjects' => $completedProjects,
+            'totalCount' => $activeProjects->count() + $completedProjects->count(),
         ]);
     }
 
@@ -87,8 +99,19 @@ class ProjectController extends Controller
 
     public function show(Request $request, Project $project): View|JsonResponse
     {
-        $project->loadCount('tasks');
+        $project->loadCount([
+            'tasks',
+            'tasks as completed_tasks_count' => function (Builder $q) {
+                $q->where('status', TaskStatus::Completed->value);
+            },
+        ]);
         $project->load('workspace');
+
+        $tasks = $project->tasks()
+            ->with(['user', 'timeEntries'])
+            ->latest()
+            ->limit(20)
+            ->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -98,6 +121,7 @@ class ProjectController extends Controller
 
         return view('projects.show', [
             'project' => $project,
+            'tasks' => $tasks,
         ]);
     }
 
@@ -146,17 +170,79 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function destroy(Project $project): RedirectResponse|JsonResponse
+    public function complete(Request $request, Project $project): RedirectResponse|JsonResponse
     {
-        $project->delete();
+        $this->authorize('update', $project);
 
-        if (request()->ajax()) {
-            return response()->json(['message' => 'Project deleted successfully.']);
+        if ($project->hasOutstandingTasks()) {
+            throw ValidationException::withMessages([
+                'project' => 'Complete all tasks in this project before marking the project complete.',
+            ]);
+        }
+
+        $project->update([
+            'status' => ProjectStatus::Completed->value,
+            'completed_at' => now(),
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'message' => 'Project marked as complete.',
+                'project' => $this->projectPayload($project->fresh()),
+            ]);
+        }
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'Project marked as complete.');
+    }
+
+    public function reopen(Request $request, Project $project): RedirectResponse|JsonResponse
+    {
+        $this->authorize('update', $project);
+
+        $project->update([
+            'status' => ProjectStatus::Active->value,
+            'completed_at' => null,
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'message' => 'Project reopened.',
+                'project' => $this->projectPayload($project->fresh()),
+            ]);
+        }
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'Project reopened.');
+    }
+
+    public function destroy(Request $request, Project $project): RedirectResponse|JsonResponse
+    {
+        $taskAction = $request->input('task_action', 'unassign');
+
+        DB::transaction(function () use ($project, $taskAction): void {
+            if ($taskAction === 'delete') {
+                $project->tasks()->get()->each->delete();
+            } else {
+                $project->tasks()->update(['project_id' => null]);
+            }
+
+            $project->delete();
+        });
+
+        $message = $taskAction === 'delete'
+            ? 'Project and its tasks were deleted.'
+            : 'Project deleted. Tasks were kept and unassigned.';
+
+        if ($request->ajax()) {
+            return response()->json(['message' => $message]);
         }
 
         return redirect()
             ->route('projects.index')
-            ->with('status', 'Project deleted successfully.');
+            ->with('status', $message);
     }
 
     public function search(Request $request): JsonResponse
@@ -197,6 +283,9 @@ class ProjectController extends Controller
             'full_name' => $project->fullName(),
             'description' => $project->description,
             'color' => $project->color,
+            'status' => $project->status?->value,
+            'status_label' => $project->status?->label(),
+            'is_completed' => $project->isCompleted(),
             'workspace_id' => $project->workspace_id,
             'workspace' => $project->workspace ? [
                 'id' => $project->workspace->id,
@@ -204,8 +293,11 @@ class ProjectController extends Controller
                 'color' => $project->workspace->color,
             ] : null,
             'tasks_count' => $project->tasks_count ?? $project->tasks()->count(),
+            'completed_tasks_count' => $project->completed_tasks_count ?? null,
             'edit_url' => route('projects.edit', $project),
             'delete_url' => route('projects.destroy', $project),
+            'complete_url' => route('projects.complete', $project),
+            'reopen_url' => route('projects.reopen', $project),
         ];
     }
 }

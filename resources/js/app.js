@@ -6,6 +6,7 @@ import { initSearchablePickers } from './searchable-picker';
 import { initSidebar } from './sidebar';
 import { initTasks } from './tasks';
 import { initTheme } from './theme';
+import { initTaskRowLiveTimers, initTimeTrackerClock } from './time-tracker';
 import { initWorkspaces } from './workspaces';
 
 initTheme();
@@ -16,3 +17,5 @@ initProjects();
 initWorkspaces();
 initSearchablePickers();
 initInlineAttachers();
+initTimeTrackerClock();
+initTaskRowLiveTimers();

@@ -172,8 +172,26 @@ function setupPicker(root) {
         }
         selectOption(button.dataset.value, button.dataset.label, button.dataset.color);
     });
+
+    root.addEventListener('picker:set', (event) => {
+        const detail = event.detail || {};
+        selectOption(detail.id || '', detail.label || '', detail.color || '');
+    });
 }
 
-export function initSearchablePickers() {
-    document.querySelectorAll('[data-searchable-picker]').forEach(setupPicker);
+export function initSearchablePickers(scope = document) {
+    scope.querySelectorAll('[data-searchable-picker]').forEach(setupPicker);
+}
+
+export function setSearchablePickerValue(root, { id = '', label = '', color = '' } = {}) {
+    if (!root) {
+        return;
+    }
+    root.dispatchEvent(new CustomEvent('picker:set', {
+        detail: { id, label, color },
+    }));
+}
+
+if (typeof window !== 'undefined') {
+    window.atlySetSearchablePicker = setSearchablePickerValue;
 }

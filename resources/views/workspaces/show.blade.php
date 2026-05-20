@@ -29,7 +29,14 @@
         <div class="rounded-atly-lg border border-atly-border bg-atly-card p-5 shadow-atly">
             <div class="mb-3 flex items-center justify-between">
                 <h3 class="font-display text-sm font-semibold uppercase tracking-wide text-atly-ink-soft">Projects ({{ $workspace->projects_count }})</h3>
-                <button type="button" data-open-project-modal class="inline-flex items-center gap-1.5 rounded-lg border border-atly-border bg-atly-surface px-3 py-1.5 text-xs font-semibold text-atly-ink hover:bg-atly-muted/50">
+                <button
+                    type="button"
+                    data-open-project-modal
+                    data-prefill-workspace-id="{{ $workspace->id }}"
+                    data-prefill-workspace-label="{{ $workspace->name }}"
+                    data-prefill-workspace-color="{{ $workspace->color }}"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-atly-border bg-atly-surface px-3 py-1.5 text-xs font-semibold text-atly-ink hover:bg-atly-muted/50"
+                >
                     <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                     Add project
                 </button>

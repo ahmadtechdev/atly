@@ -56,6 +56,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Workspace::class);
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
     /**
      * @return Attribute<string|null, never>
      */

@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TimeTrackerController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,13 +42,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('tasks/search', [TaskController::class, 'search'])->name('tasks.search');
     Route::patch('tasks/{task}/start', [TaskController::class, 'start'])->name('tasks.start');
     Route::patch('tasks/{task}/toggle-complete', [TaskController::class, 'toggleComplete'])->name('tasks.toggle-complete');
     Route::patch('tasks/{task}/project', [TaskController::class, 'updateProject'])->name('tasks.update-project');
     Route::resource('tasks', TaskController::class);
 
+    Route::get('time-tracker', [TimeTrackerController::class, 'index'])->name('time-tracker.index');
+    Route::post('time-tracker/start', [TimeTrackerController::class, 'start'])->name('time-tracker.start');
+    Route::patch('time-tracker/{entry}/stop', [TimeTrackerController::class, 'stop'])->name('time-tracker.stop');
+    Route::delete('time-tracker/{entry}', [TimeTrackerController::class, 'destroy'])->name('time-tracker.destroy');
+
     Route::get('projects/search', [ProjectController::class, 'search'])->name('projects.search');
     Route::patch('projects/{project}/workspace', [ProjectController::class, 'updateWorkspace'])->name('projects.update-workspace');
+    Route::patch('projects/{project}/complete', [ProjectController::class, 'complete'])->name('projects.complete');
+    Route::patch('projects/{project}/reopen', [ProjectController::class, 'reopen'])->name('projects.reopen');
     Route::resource('projects', ProjectController::class);
 
     Route::get('workspaces/search', [WorkspaceController::class, 'search'])->name('workspaces.search');

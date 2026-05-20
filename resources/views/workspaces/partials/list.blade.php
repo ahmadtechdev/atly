@@ -25,15 +25,30 @@
                     </a>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3 text-xs text-atly-ink-soft">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/40 px-2.5 py-1">
-                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75" /></svg>
-                        {{ $workspace->projects_count }} {{ $workspace->projects_count === 1 ? 'project' : 'projects' }}
-                    </span>
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/40 px-2.5 py-1">
-                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192" /></svg>
-                        {{ $workspace->tasks_count }} {{ $workspace->tasks_count === 1 ? 'task' : 'tasks' }}
-                    </span>
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-atly-ink-soft">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/40 px-2.5 py-1">
+                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75" /></svg>
+                            {{ $workspace->projects_count }} {{ $workspace->projects_count === 1 ? 'project' : 'projects' }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/40 px-2.5 py-1">
+                            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192" /></svg>
+                            {{ $workspace->tasks_count }} {{ $workspace->tasks_count === 1 ? 'task' : 'tasks' }}
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        data-open-project-modal
+                        data-prefill-workspace-id="{{ $workspace->id }}"
+                        data-prefill-workspace-label="{{ $workspace->name }}"
+                        data-prefill-workspace-color="{{ $workspace->color }}"
+                        class="inline-flex items-center gap-1 rounded-lg border border-atly-border bg-atly-surface px-2 py-1 text-xs font-semibold text-atly-ink transition hover:border-atly-accent hover:bg-atly-muted/40"
+                        title="Add project to this workspace"
+                    >
+                        <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Project
+                    </button>
                 </div>
 
                 @if ($workspace->projects->isNotEmpty())

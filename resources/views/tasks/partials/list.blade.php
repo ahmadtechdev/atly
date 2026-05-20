@@ -1,4 +1,5 @@
 @use(App\Enums\TaskStatus)
+@use(Illuminate\Support\Str)
 
 <div id="tasks-list" class="divide-y divide-atly-border">
     @forelse ($tasks as $task)
@@ -14,9 +15,9 @@
                 data-task-select
                 role="button"
                 tabindex="0"
-                class="task-item grid min-w-0 flex-1 cursor-pointer items-center gap-x-2 text-left sm:gap-x-3 grid-cols-[6px_minmax(0,1fr)_auto_1.25rem] sm:grid-cols-[6px_minmax(0,1fr)_5.75rem_4.5rem_2.75rem_1.25rem]"
+                class="task-item grid min-w-0 flex-1 cursor-pointer items-center gap-x-2 text-left sm:gap-x-3 grid-cols-[6px_minmax(0,1fr)_1.25rem] sm:grid-cols-[6px_minmax(0,1fr)_6.5rem_5.75rem_4.5rem_2.75rem_1.25rem]"
             >
-                <span class="size-1.5 shrink-0 self-center rounded-full sm:size-2 {{ $task->priority->dotClass() }}" aria-hidden="true"></span>
+                <span class="size-1.5 shrink-0 self-center rounded-full sm:size-2 {{ $task->priority->dotClass() }}" aria-hidden="true" title="{{ $task->priority->label() }} priority"></span>
 
                 <span class="flex min-w-0 flex-col gap-0.5 self-center">
                     <span
@@ -29,6 +30,7 @@
                     >{{ $task->title }}</span>
 
                     <span
+                        class="min-w-0 max-w-full"
                         data-inline-attacher
                         data-update-url="{{ route('tasks.update-project', $task) }}"
                         data-search-url="{{ route('projects.search') }}"
@@ -36,14 +38,21 @@
                         data-entity-label="project"
                         @if ($task->project)
                             data-current-id="{{ $task->project->id }}"
-                            data-current-label="{{ $task->project->name }}"
+                            data-current-label="{{ Str::limit($task->project->name, 30) }}"
                             data-current-color="{{ $task->project->color }}"
                             data-current-href="{{ route('projects.show', $task->project) }}"
                         @endif
                     ></span>
                 </span>
 
-                <span class="flex min-w-0 items-center justify-end gap-1.5 self-center sm:contents">
+                <span
+                    data-task-time-cell
+                    class="hidden self-center sm:flex sm:justify-end"
+                >
+                    @include('tasks.partials.time-chip', ['task' => $task])
+                </span>
+
+                <span class="hidden sm:contents">
                     <x-dashboard.task-badge
                         type="status"
                         :value="$task->status->value"
