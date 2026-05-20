@@ -3,15 +3,16 @@
 namespace App\Enums;
 
 /**
- * Roles that an invited collaborator can hold on a Task, Project, or Workspace.
+ * Roles a collaborator can hold on a Task, Project, or Workspace.
  *
- * The owner of the entity is always the creator and never stored as a membership
- * row — `Owner` is implicit and lives in `user_id` on the entity itself.
+ * The owner of the entity is implicit (the creator, stored in `user_id`) and
+ * is never written as a membership row.
  */
 enum MembershipRole: string
 {
     case Admin = 'admin';
     case Assignee = 'assignee';
+    case Viewer = 'viewer';
     case Guest = 'guest';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum MembershipRole: string
         return match ($this) {
             self::Admin => 'Admin',
             self::Assignee => 'Assignee',
+            self::Viewer => 'Viewer',
             self::Guest => 'Guest',
         };
     }
@@ -26,9 +28,10 @@ enum MembershipRole: string
     public function description(): string
     {
         return match ($this) {
-            self::Admin => 'Can invite others and assign work.',
-            self::Assignee => 'Can complete work, cannot invite others.',
-            self::Guest => 'Read-only access.',
+            self::Admin => 'Can invite others, assign work, and edit settings.',
+            self::Assignee => 'Can complete work and comment, cannot invite others.',
+            self::Viewer => 'Can view and comment only.',
+            self::Guest => 'Can view and read comments. Cannot post comments.',
         };
     }
 
@@ -37,6 +40,7 @@ enum MembershipRole: string
         return match ($this) {
             self::Admin => 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200',
             self::Assignee => 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
+            self::Viewer => 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
             self::Guest => 'bg-atly-muted text-atly-ink-soft',
         };
     }
@@ -56,9 +60,24 @@ enum MembershipRole: string
         return $this === self::Admin || $this === self::Assignee;
     }
 
+    public function canComment(): bool
+    {
+        return $this !== self::Guest;
+    }
+
     /**
-     * Try to resolve a stored value (or null) to an enum case.
+     * Numeric weight so we can pick the "highest" role across a hierarchy.
      */
+    public function weight(): int
+    {
+        return match ($this) {
+            self::Admin => 40,
+            self::Assignee => 30,
+            self::Viewer => 20,
+            self::Guest => 10,
+        };
+    }
+
     public static function tryParse(?string $value): ?self
     {
         if ($value === null) {
@@ -69,10 +88,26 @@ enum MembershipRole: string
     }
 
     /**
+     * Pick the strongest of two roles (either may be null).
+     */
+    public static function strongest(?self $a, ?self $b): ?self
+    {
+        if ($a === null) {
+            return $b;
+        }
+
+        if ($b === null) {
+            return $a;
+        }
+
+        return $a->weight() >= $b->weight() ? $a : $b;
+    }
+
+    /**
      * @return array<int, self>
      */
     public static function assignable(): array
     {
-        return [self::Admin, self::Assignee, self::Guest];
+        return [self::Admin, self::Assignee, self::Viewer, self::Guest];
     }
 }

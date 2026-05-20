@@ -12,6 +12,7 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\InvitationService;
 use App\Services\VerificationCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class AuthController extends Controller
 
     public function __construct(
         private readonly VerificationCodeService $verificationCodeService,
+        private readonly InvitationService $invitationService,
     ) {}
 
     public function register(RegisterRequest $request): JsonResponse
@@ -30,6 +32,8 @@ class AuthController extends Controller
         $user = User::query()->create($request->validated());
 
         $this->verificationCodeService->send($user, VerificationCodeType::EmailVerification);
+
+        $this->invitationService->linkPendingInvitationsForUser($user);
 
         return $this->jsonSuccess(
             'Registration successful. Check your email for a 6-digit verification code.',

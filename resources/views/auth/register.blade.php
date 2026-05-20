@@ -8,7 +8,7 @@
 
             <x-auth.input name="name" label="Full name" autocomplete="name" placeholder="Ahmad Khan" />
 
-            <x-auth.input name="email" label="Email" type="email" autocomplete="email" placeholder="you@example.com" />
+            <x-auth.input name="email" label="Email" type="email" autocomplete="email" placeholder="you@example.com" :value="request()->query('email')" />
 
             <x-auth.input name="password" label="Password" type="password" autocomplete="new-password" placeholder="••••••••" />
 

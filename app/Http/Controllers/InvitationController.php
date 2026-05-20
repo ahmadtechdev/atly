@@ -59,8 +59,14 @@ class InvitationController extends Controller
             role: $request->string('role')->toString() ?: null,
         );
 
+        $recipientStatus = $this->service->lastRecipientStatus ?? 'registered';
+        $message = $recipientStatus === 'pending_registration'
+            ? 'We sent an invitation email. They are not on ATLY yet, so we asked them to create an account first. The invitation will be linked automatically when they sign up.'
+            : 'Invitation sent.';
+
         return response()->json([
-            'message' => 'Invitation sent.',
+            'message' => $message,
+            'recipient_status' => $recipientStatus,
             'invitation' => $this->payload($invitation),
         ]);
     }

@@ -84,10 +84,15 @@ class Project extends Model
             return MembershipRole::Admin;
         }
 
+        $direct = null;
         $member = $this->members()->whereKey($user->id)->first();
 
         if ($member) {
-            return MembershipRole::tryParse($member->pivot->role);
+            $direct = MembershipRole::tryParse($member->pivot->role);
+        }
+
+        if ($direct !== null) {
+            return $direct;
         }
 
         return $this->workspace_id !== null
@@ -102,6 +107,15 @@ class Project extends Model
         }
 
         return $this->roleFor($user)?->canManage() === true;
+    }
+
+    public function canComment(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->roleFor($user)?->canComment() === true;
     }
 
     /**

@@ -81,6 +81,15 @@ class Workspace extends Model
         return $this->roleFor($user)?->canManage() === true;
     }
 
+    public function canComment(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->roleFor($user)?->canComment() === true;
+    }
+
     /**
      * @param  Builder<self>  $query
      * @return Builder<self>

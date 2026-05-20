@@ -6,6 +6,7 @@ use App\Enums\VerificationCodeType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Services\InvitationService;
 use App\Services\VerificationCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -14,6 +15,7 @@ class RegisterController extends Controller
 {
     public function __construct(
         private readonly VerificationCodeService $verificationCodeService,
+        private readonly InvitationService $invitationService,
     ) {}
 
     public function create(): View
@@ -26,6 +28,8 @@ class RegisterController extends Controller
         $user = User::query()->create($request->validated());
 
         $this->verificationCodeService->send($user, VerificationCodeType::EmailVerification);
+
+        $this->invitationService->linkPendingInvitationsForUser($user);
 
         return redirect()
             ->route('verification.notice', ['email' => $user->email])

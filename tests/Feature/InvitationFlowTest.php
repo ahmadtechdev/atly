@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\InvitationReceivedNotification;
+use App\Notifications\InvitationToJoinAtlyNotification;
 use App\Services\InvitationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -39,12 +40,13 @@ it('sends an invitation to an unknown email address via mail route', function ()
     $inviter = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $inviter->id]);
 
-    $invitation = app(InvitationService::class)
-        ->send($inviter, $workspace, 'newperson@example.com');
+    $service = app(InvitationService::class);
+    $invitation = $service->send($inviter, $workspace, 'newperson@example.com');
 
-    expect($invitation->invitee_id)->toBeNull();
+    expect($invitation->invitee_id)->toBeNull()
+        ->and($service->lastRecipientStatus)->toBe('pending_registration');
 
-    Notification::assertSentOnDemand(InvitationReceivedNotification::class);
+    Notification::assertSentOnDemand(InvitationToJoinAtlyNotification::class);
 });
 
 it('rejects duplicate pending invitations for the same target and email', function () {
@@ -249,4 +251,20 @@ it('stores invitations via http for the entity owner only', function () {
         ->assertOk();
 
     expect(Invitation::query()->count())->toBe(1);
+});
+
+it('returns pending_registration status when inviting an unregistered email via http', function () {
+    $owner = User::factory()->create();
+    $owner->markEmailAsVerified();
+    $project = Project::factory()->create(['user_id' => $owner->id]);
+
+    $this->actingAs($owner)
+        ->postJson(route('invitations.store'), [
+            'invitable_type' => 'project',
+            'invitable_id' => $project->id,
+            'email' => 'brandnew@example.com',
+            'role' => 'viewer',
+        ])
+        ->assertOk()
+        ->assertJsonPath('recipient_status', 'pending_registration');
 });

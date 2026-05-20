@@ -10,6 +10,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\InvitationReceivedNotification;
+use App\Notifications\InvitationToJoinAtlyNotification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -27,6 +28,13 @@ class InvitationService
     /**
      * Create a fresh invitation. Throws ValidationException on duplicate or self-invite.
      */
+    /**
+     * Holds the recipient status of the most recent `send()` call so callers
+     * (e.g. controllers) can surface contextual UI messages without an extra
+     * lookup. Either 'registered' or 'pending_registration'.
+     */
+    public ?string $lastRecipientStatus = null;
+
     public function send(
         User $inviter,
         Model $invitable,
@@ -75,6 +83,8 @@ class InvitationService
             'message' => $message,
             'expires_at' => now()->addDays(14),
         ]);
+
+        $this->lastRecipientStatus = $invitee === null ? 'pending_registration' : 'registered';
 
         $this->notify($invitation, $invitee, $email);
 
@@ -193,14 +203,13 @@ class InvitationService
 
     private function notify(Invitation $invitation, ?User $invitee, string $email): void
     {
-        $notification = new InvitationReceivedNotification($invitation);
-
         if ($invitee !== null) {
-            $invitee->notify($notification);
+            $invitee->notify(new InvitationReceivedNotification($invitation));
 
             return;
         }
 
-        Notification::route('mail', $email)->notify($notification);
+        Notification::route('mail', $email)
+            ->notify(new InvitationToJoinAtlyNotification($invitation));
     }
 }

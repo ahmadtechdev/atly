@@ -6,6 +6,7 @@ use App\Enums\MembershipRole;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Models\TaskComment;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,14 @@ class TaskPresenter
      */
     public static function payload(Task $task): array
     {
-        $task->loadMissing(['attachments', 'user', 'project.workspace', 'timeEntries', 'collaborators']);
+        $task->loadMissing([
+            'attachments',
+            'user',
+            'project.workspace',
+            'timeEntries',
+            'collaborators',
+            'comments.user',
+        ]);
 
         /** @var User|null $viewer */
         $viewer = Auth::user();
@@ -26,6 +34,7 @@ class TaskPresenter
         $viewerRole = $viewer !== null ? $task->roleFor($viewer) : null;
         $canManage = $viewer !== null && $task->canManage($viewer);
         $canComplete = $viewer !== null && $task->canComplete($viewer);
+        $canComment = $viewer !== null && $task->canComment($viewer);
 
         $running = $task->runningTimeEntry();
         $totalSeconds = $task->totalTrackedSeconds();
@@ -58,6 +67,8 @@ class TaskPresenter
             'start_url' => route('tasks.start', $task),
             'complete_url' => route('tasks.toggle-complete', $task),
             'update_project_url' => route('tasks.update-project', $task),
+            'show_url' => route('tasks.show', $task),
+            'comments_url' => route('tasks.comments.store', $task),
             'time_tracking' => [
                 'total_seconds' => $totalSeconds,
                 'total_label' => TimeEntry::formatSeconds($totalSeconds),
@@ -102,7 +113,28 @@ class TaskPresenter
                 'can_delete' => $isOwner,
                 'can_invite' => $canManage,
                 'can_complete' => $canComplete,
+                'can_comment' => $canComment,
             ],
+            'comments' => $task->comments->sortBy('created_at')->values()->map(function (TaskComment $comment) use ($viewer, $task) {
+                $canDelete = $viewer !== null
+                    && ($comment->user_id === $viewer->id || $task->canManage($viewer));
+
+                return [
+                    'id' => $comment->id,
+                    'body' => $comment->body,
+                    'created_at' => $comment->created_at?->toIso8601String(),
+                    'created_at_label' => $comment->created_at?->diffForHumans(),
+                    'can_delete' => $canDelete,
+                    'delete_url' => route('tasks.comments.destroy', [$task->id, $comment->id]),
+                    'author' => [
+                        'id' => $comment->user?->id,
+                        'name' => $comment->user?->name,
+                        'initials' => $comment->user?->initials(),
+                        'avatar_url' => $comment->user?->avatar_url,
+                    ],
+                ];
+            })->values(),
+            'comments_count' => $task->comments->count(),
             'project' => $task->project ? [
                 'id' => $task->project->id,
                 'name' => Str::limit($task->project->name, 30),

@@ -6,6 +6,7 @@ use App\Enums\MembershipRole;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Workspace;
+use App\Rules\HasEmailDomainMx;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,7 +42,7 @@ class StoreInvitationRequest extends FormRequest
         return [
             'invitable_type' => ['required', Rule::in(array_keys(self::TYPES))],
             'invitable_id' => ['required', 'integer'],
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:255', new HasEmailDomainMx],
             'message' => ['nullable', 'string', 'max:500'],
             'role' => ['nullable', Rule::in(array_map(fn (MembershipRole $r) => $r->value, MembershipRole::assignable()))],
         ];

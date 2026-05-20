@@ -95,10 +95,15 @@ class Task extends Model
             return MembershipRole::Admin;
         }
 
+        $direct = null;
         $collaborator = $this->collaborators()->whereKey($user->id)->first();
 
         if ($collaborator) {
-            return MembershipRole::tryParse($collaborator->pivot->role);
+            $direct = MembershipRole::tryParse($collaborator->pivot->role);
+        }
+
+        if ($direct !== null) {
+            return $direct;
         }
 
         return $this->project_id !== null
@@ -122,6 +127,20 @@ class Task extends Model
         }
 
         return $this->roleFor($user)?->canComplete() === true;
+    }
+
+    public function canComment(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->roleFor($user)?->canComment() === true;
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class)->latest();
     }
 
     /**

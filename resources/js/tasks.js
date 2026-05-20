@@ -153,6 +153,61 @@ function renderCollaborators(task) {
     `;
 }
 
+function renderCommentChip(task) {
+    const count = task.comments_count ?? 0;
+
+    return `
+        <a href="${task.show_url}#comments" class="inline-flex items-center gap-1 rounded-full border border-atly-border bg-atly-surface px-2.5 py-0.5 text-[11px] font-medium text-atly-ink-soft transition hover:border-atly-accent hover:text-atly-ink">
+            <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/></svg>
+            ${count} ${count === 1 ? 'comment' : 'comments'}
+        </a>
+    `;
+}
+
+function renderCommentsPreview(task) {
+    const list = Array.isArray(task.comments) ? task.comments.slice(-3) : [];
+    const viewer = task.viewer || {};
+
+    if (list.length === 0 && !viewer.can_comment) {
+        return '';
+    }
+
+    const items = list.map((c) => {
+        const avatar = c.author?.avatar_url
+            ? `<img src="${c.author.avatar_url}" alt="${escapeHtml(c.author.name)}" class="size-6 shrink-0 rounded-full object-cover">`
+            : `<span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-atly-muted text-[10px] font-semibold text-atly-ink">${escapeHtml(c.author?.initials || '?')}</span>`;
+
+        return `
+            <li class="flex gap-2 rounded-lg border border-atly-border/60 bg-atly-surface px-2.5 py-1.5">
+                ${avatar}
+                <div class="min-w-0 flex-1">
+                    <p class="flex items-baseline gap-1.5"><span class="truncate text-[11px] font-semibold text-atly-ink">${escapeHtml(c.author?.name || 'Anonymous')}</span><span class="text-[10px] text-atly-ink-soft">${escapeHtml(c.created_at_label || '')}</span></p>
+                    <p class="line-clamp-2 text-xs leading-snug text-atly-ink whitespace-pre-wrap break-words">${escapeHtml(c.body)}</p>
+                </div>
+            </li>
+        `;
+    }).join('');
+
+    const more = (task.comments_count ?? 0) > list.length
+        ? `<a href="${task.show_url}#comments" class="block pt-1 text-center text-[11px] font-medium text-atly-ink-soft hover:text-atly-ink underline-offset-2 hover:underline">View all ${task.comments_count} comments</a>`
+        : '';
+
+    const cta = viewer.can_comment
+        ? `<a href="${task.show_url}#comments" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-atly-border bg-atly-surface px-3 py-2 text-xs font-medium text-atly-ink-soft hover:border-atly-accent hover:text-atly-ink">+ Add comment</a>`
+        : '';
+
+    return `
+        <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Comments (${task.comments_count ?? 0})</p>
+                <a href="${task.show_url}#comments" class="text-[10px] font-medium text-atly-ink-soft hover:text-atly-ink">Open full</a>
+            </div>
+            ${list.length > 0 ? `<ul class="space-y-1.5">${items}</ul>${more}` : ''}
+            ${cta}
+        </div>
+    `;
+}
+
 function renderTaskDetail(task) {
     const attachments = (task.attachments ?? [])
         .map((file) => {
@@ -168,6 +223,9 @@ function renderTaskDetail(task) {
     const titleClass = isCompleted ? 'text-atly-ink-soft line-through' : 'text-atly-ink';
     const viewer = task.viewer || {};
 
+    const openFullBtn = task.show_url
+        ? `<a href="${task.show_url}" class="inline-flex items-center gap-1.5 rounded-xl border border-atly-border bg-atly-card px-3 py-1.5 text-xs font-semibold text-atly-ink hover:bg-atly-muted/50" title="Open full task page"><svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>Open</a>`
+        : '';
     const editBtn = viewer.can_edit
         ? `<a href="${task.edit_url}" class="inline-flex rounded-xl bg-atly-contrast-bg px-4 py-2 text-sm font-semibold text-atly-contrast-fg">Edit</a>`
         : '';
@@ -191,11 +249,15 @@ function renderTaskDetail(task) {
         <div class="min-w-0 space-y-4">
             ${primaryAction}
             <div class="min-w-0">
-                <h3 class="font-display text-lg font-bold ${titleClass}">${escapeHtml(task.title)}</h3>
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="min-w-0 font-display text-lg font-bold ${titleClass}">${escapeHtml(task.title)}</h3>
+                    ${openFullBtn}
+                </div>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${task.status_class}">${escapeHtml(task.status_label)}</span>
                     <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${task.priority_class}">${escapeHtml(task.priority_label)}</span>
                     ${viewerBadge}
+                    ${renderCommentChip(task)}
                 </div>
             </div>
             ${renderCollaborators(task)}
@@ -212,6 +274,7 @@ function renderTaskDetail(task) {
                 <div class="flex items-baseline gap-2"><dt class="text-atly-ink-soft">Due</dt><dd class="font-medium ${task.is_overdue ? 'text-rose-600' : 'text-atly-ink'}">${task.due_date ?? '—'}</dd></div>
             </dl>
             ${attachments ? `<div class="space-y-2"><p class="text-xs font-semibold uppercase tracking-wide text-atly-ink-soft">Attachments</p>${attachments}</div>` : ''}
+            ${renderCommentsPreview(task)}
             <div class="flex flex-wrap gap-2 pt-1">
                 ${editBtn}${inviteBtn}${deleteBtn}
             </div>

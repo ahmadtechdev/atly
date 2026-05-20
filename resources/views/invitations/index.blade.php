@@ -90,8 +90,18 @@
                                 </div>
                             </div>
 
-                            <div class="flex shrink-0 items-center gap-2">
+                            <div class="flex shrink-0 flex-wrap items-center gap-2">
+                                @php
+                                    $role = \App\Enums\MembershipRole::tryParse($invitation->role);
+                                @endphp
+                                @if ($role)
+                                    <span class="inline-flex rounded-md px-2 py-0.5 text-[10px] font-semibold {{ $role->colorClass() }}">{{ $role->label() }}</span>
+                                @endif
                                 <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold {{ $invitation->status->colorClass() }}">{{ $invitation->status->label() }}</span>
+
+                                @if (! $isIncoming && $invitation->invitee_id === null && $invitation->isPending())
+                                    <span class="inline-flex rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-200" title="Recipient hasn't signed up yet — they'll appear after creating an account.">Awaiting sign-up</span>
+                                @endif
 
                                 @if ($invitation->isPending())
                                     @if ($isIncoming)

@@ -107,12 +107,23 @@ export function initInvitations() {
             const data = await response.json().catch(() => ({}));
 
             if (response.ok) {
+                const pendingRegistration = data.recipient_status === 'pending_registration';
+
                 successEl.textContent = data.message || 'Invitation sent.';
                 successEl.classList.remove('hidden');
+
+                if (pendingRegistration) {
+                    successEl.classList.remove('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+                    successEl.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
+                } else {
+                    successEl.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+                    successEl.classList.remove('border-amber-200', 'bg-amber-50', 'text-amber-800');
+                }
+
                 emailInput.value = '';
                 messageInput.value = '';
 
-                setTimeout(closeModal, 1200);
+                setTimeout(closeModal, pendingRegistration ? 3500 : 1200);
                 return;
             }
 

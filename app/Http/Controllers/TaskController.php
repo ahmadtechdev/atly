@@ -99,12 +99,19 @@ class TaskController extends Controller
             ->with('status', 'Task created successfully.');
     }
 
-    public function show(Task $task): JsonResponse
+    public function show(Request $request, Task $task): JsonResponse|View
     {
-        $task->load(['attachments', 'user', 'project.workspace']);
+        $task->load(['attachments', 'user', 'project.workspace', 'collaborators', 'comments.user', 'timeEntries']);
 
-        return response()->json([
-            'task' => $this->taskPayload($task),
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'task' => $this->taskPayload($task),
+            ]);
+        }
+
+        return view('tasks.show', [
+            'task' => $task,
+            'payload' => $this->taskPayload($task),
         ]);
     }
 
