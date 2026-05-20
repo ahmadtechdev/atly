@@ -14,7 +14,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request): View
     {
         $user = $request->user();
-        $baseQuery = Task::query()->forUser($user);
+        $baseQuery = Task::query()->accessibleFor($user);
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
@@ -55,11 +55,11 @@ class DashboardController extends Controller
             return [
                 'label' => $date->format('D'),
                 'created' => Task::query()
-                    ->forUser($user)
+                    ->accessibleFor($user)
                     ->whereDate('created_at', $date)
                     ->count(),
                 'completed' => Task::query()
-                    ->forUser($user)
+                    ->accessibleFor($user)
                     ->whereDate('completed_at', $date)
                     ->count(),
             ];

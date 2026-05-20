@@ -1,6 +1,7 @@
 import './bootstrap';
 import { initDashboardCharts } from './dashboard-charts';
 import { initInlineAttachers } from './inline-attacher';
+import { initInvitations } from './invitations';
 import { initProjects } from './projects';
 import { initSearchablePickers } from './searchable-picker';
 import { initSidebar } from './sidebar';
@@ -17,5 +18,6 @@ initProjects();
 initWorkspaces();
 initSearchablePickers();
 initInlineAttachers();
+initInvitations();
 initTimeTrackerClock();
 initTaskRowLiveTimers();

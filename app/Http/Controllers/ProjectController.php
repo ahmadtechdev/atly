@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -31,7 +30,7 @@ class ProjectController extends Controller
         $user = $request->user();
 
         $baseQuery = fn () => Project::query()
-            ->forUser($user)
+            ->accessibleFor($user)
             ->with('workspace:id,name,color')
             ->withCount(['tasks', 'tasks as completed_tasks_count' => function (Builder $q) {
                 $q->where('status', TaskStatus::Completed->value);
@@ -105,7 +104,7 @@ class ProjectController extends Controller
                 $q->where('status', TaskStatus::Completed->value);
             },
         ]);
-        $project->load('workspace');
+        $project->load(['workspace', 'members']);
 
         $tasks = $project->tasks()
             ->with(['user', 'timeEntries'])
@@ -147,11 +146,20 @@ class ProjectController extends Controller
         $this->authorize('update', $project);
 
         $data = $request->validate([
-            'workspace_id' => [
-                'nullable',
-                Rule::exists('workspaces', 'id')->where(fn ($q) => $q->where('user_id', $request->user()->id)),
-            ],
+            'workspace_id' => ['nullable', 'integer'],
         ]);
+
+        if ($data['workspace_id'] !== null) {
+            $workspace = Workspace::query()
+                ->accessibleFor($request->user())
+                ->find($data['workspace_id']);
+
+            if ($workspace === null) {
+                throw ValidationException::withMessages([
+                    'workspace_id' => 'You do not have access to that workspace.',
+                ]);
+            }
+        }
 
         $project->update(['workspace_id' => $data['workspace_id'] ?? null]);
         $project->load('workspace');
@@ -253,7 +261,7 @@ class ProjectController extends Controller
         $search = trim((string) $request->string('search'));
 
         $projects = Project::query()
-            ->forUser($user)
+            ->accessibleFor($user)
             ->with('workspace:id,name')
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");

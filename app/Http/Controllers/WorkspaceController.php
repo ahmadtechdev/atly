@@ -25,7 +25,7 @@ class WorkspaceController extends Controller
         $user = $request->user();
 
         $workspaces = Workspace::query()
-            ->forUser($user)
+            ->accessibleFor($user)
             ->withCount(['projects', 'tasks'])
             ->with(['projects' => fn ($q) => $q->orderBy('name')->limit(5)->withCount('tasks')])
             ->when($request->filled('search'), function (Builder $q) use ($request) {
@@ -74,7 +74,10 @@ class WorkspaceController extends Controller
 
     public function show(Request $request, Workspace $workspace): View|JsonResponse
     {
-        $workspace->load(['projects' => fn ($q) => $q->orderBy('name')->withCount('tasks')]);
+        $workspace->load([
+            'projects' => fn ($q) => $q->orderBy('name')->withCount('tasks'),
+            'members',
+        ]);
         $workspace->loadCount(['projects', 'tasks']);
 
         if ($request->ajax()) {
@@ -125,7 +128,7 @@ class WorkspaceController extends Controller
         $search = trim((string) $request->string('search'));
 
         $workspaces = Workspace::query()
-            ->forUser($user)
+            ->accessibleFor($user)
             ->when($search !== '', function (Builder $query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })

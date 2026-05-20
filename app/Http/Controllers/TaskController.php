@@ -6,6 +6,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\TaskAttachmentService;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class TaskController extends Controller
@@ -33,7 +34,7 @@ class TaskController extends Controller
         $search = trim((string) $request->string('search'));
 
         $tasks = Task::query()
-            ->forUser($user)
+            ->accessibleFor($user)
             ->with('project:id,name,color')
             ->when($request->filled('project_id'), fn ($q) => $q->where('project_id', (int) $request->input('project_id')))
             ->when($search !== '', fn ($q) => $q->where('title', 'like', "%{$search}%"))
@@ -132,11 +133,20 @@ class TaskController extends Controller
         $this->authorize('update', $task);
 
         $data = $request->validate([
-            'project_id' => [
-                'nullable',
-                Rule::exists('projects', 'id')->where(fn ($q) => $q->where('user_id', $request->user()->id)),
-            ],
+            'project_id' => ['nullable', 'integer'],
         ]);
+
+        if ($data['project_id'] !== null) {
+            $project = Project::query()
+                ->accessibleFor($request->user())
+                ->find($data['project_id']);
+
+            if ($project === null) {
+                throw ValidationException::withMessages([
+                    'project_id' => 'You do not have access to that project.',
+                ]);
+            }
+        }
 
         $task->update(['project_id' => $data['project_id'] ?? null]);
         $task->load(['attachments', 'user', 'project.workspace']);
@@ -226,8 +236,8 @@ class TaskController extends Controller
         $user = $request->user();
 
         $query = Task::query()
-            ->forUser($user)
-            ->with(['attachments', 'user', 'project.workspace', 'timeEntries'])
+            ->accessibleFor($user)
+            ->with(['attachments', 'user', 'project.workspace', 'timeEntries', 'collaborators'])
             ->latest();
 
         if ($request->filled('status')) {

@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -59,6 +60,37 @@ class User extends Authenticatable implements JWTSubject
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
+    }
+
+    public function sentInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'inviter_id');
+    }
+
+    public function receivedInvitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'invitee_id');
+    }
+
+    public function collaboratingTasks(): BelongsToMany
+    {
+        return $this->belongsToMany(Task::class, 'task_collaborators')
+            ->withPivot(['role', 'invited_by'])
+            ->withTimestamps();
+    }
+
+    public function memberProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_members')
+            ->withPivot(['role', 'invited_by'])
+            ->withTimestamps();
+    }
+
+    public function memberWorkspaces(): BelongsToMany
+    {
+        return $this->belongsToMany(Workspace::class, 'workspace_members')
+            ->withPivot(['role', 'invited_by'])
+            ->withTimestamps();
     }
 
     /**

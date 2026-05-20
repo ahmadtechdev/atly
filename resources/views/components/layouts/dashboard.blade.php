@@ -44,6 +44,7 @@
     @include('tasks.partials.quick-modal')
     @include('projects.partials.quick-modal')
     @include('workspaces.partials.quick-modal')
+    @include('invitations.partials.invite-modal')
 
     @auth
         <script>
@@ -63,6 +64,11 @@
                 indexUrl: @json(route('workspaces.index')),
                 storeUrl: @json(route('workspaces.store')),
                 searchUrl: @json(route('workspaces.search')),
+                csrf: @json(csrf_token()),
+            };
+            window.atlyInvitations = {
+                indexUrl: @json(route('invitations.index')),
+                storeUrl: @json(route('invitations.store')),
                 csrf: @json(csrf_token()),
             };
         </script>

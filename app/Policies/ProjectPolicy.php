@@ -14,7 +14,7 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id;
+        return $project->hasAccessFor($user);
     }
 
     public function create(User $user): bool
@@ -24,11 +24,16 @@ class ProjectPolicy
 
     public function update(User $user, Project $project): bool
     {
-        return $user->id === $project->user_id;
+        return $project->canManage($user);
     }
 
     public function delete(User $user, Project $project): bool
     {
         return $user->id === $project->user_id;
+    }
+
+    public function invite(User $user, Project $project): bool
+    {
+        return $project->canManage($user);
     }
 }

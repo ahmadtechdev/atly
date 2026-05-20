@@ -14,7 +14,7 @@ class TaskPolicy
 
     public function view(User $user, Task $task): bool
     {
-        return $user->id === $task->user_id;
+        return $task->hasAccessFor($user);
     }
 
     public function create(User $user): bool
@@ -24,11 +24,16 @@ class TaskPolicy
 
     public function update(User $user, Task $task): bool
     {
-        return $user->id === $task->user_id;
+        return $task->canManage($user) || $task->canComplete($user);
     }
 
     public function delete(User $user, Task $task): bool
     {
         return $user->id === $task->user_id;
+    }
+
+    public function invite(User $user, Task $task): bool
+    {
+        return $task->canManage($user);
     }
 }

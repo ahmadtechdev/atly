@@ -88,7 +88,7 @@
         </div>
 
         <aside id="task-detail-panel" class="hidden min-w-0 xl:block">
-            <div class="sticky top-24 min-w-0 rounded-atly-lg border border-atly-border bg-atly-card shadow-atly">
+            <div class="sticky top-24 flex min-w-0 max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-atly-lg border border-atly-border bg-atly-card shadow-atly">
                 <div id="task-detail-empty" class="px-6 py-12 text-center">
                     <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-atly-muted/50 text-atly-ink-soft">
                         <svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -97,15 +97,15 @@
                     </div>
                     <p class="text-sm text-atly-ink-soft">Select a task to view details</p>
                 </div>
-                <div id="task-detail-content" class="hidden min-w-0 p-6"></div>
+                <div id="task-detail-content" class="hidden min-w-0 flex-1 overflow-y-auto p-6"></div>
             </div>
         </aside>
     </div>
 
     <div id="task-detail-drawer" class="fixed inset-0 z-50 hidden xl:hidden" aria-hidden="true">
         <div data-close-task-detail class="absolute inset-0 bg-atly-ink/40 backdrop-blur-sm"></div>
-        <div class="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-hidden rounded-t-2xl border border-atly-border bg-atly-card shadow-atly-lg">
-            <div id="task-detail-drawer-content" class="min-w-0 overflow-hidden p-6"></div>
+        <div class="absolute bottom-0 left-0 right-0 flex max-h-[85vh] flex-col overflow-hidden rounded-t-2xl border border-atly-border bg-atly-card shadow-atly-lg">
+            <div id="task-detail-drawer-content" class="min-w-0 flex-1 overflow-y-auto p-6"></div>
         </div>
     </div>
 

@@ -10,22 +10,36 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasColumn('projects', 'parent_id')) {
-            $foreignKeys = collect(DB::select(
-                'SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL',
-                ['projects', 'parent_id']
-            ))->pluck('CONSTRAINT_NAME');
+            $driver = Schema::getConnection()->getDriverName();
 
-            foreach ($foreignKeys as $name) {
-                DB::statement("ALTER TABLE `projects` DROP FOREIGN KEY `{$name}`");
+            if ($driver === 'mysql' || $driver === 'mariadb') {
+                $foreignKeys = collect(DB::select(
+                    'SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? AND REFERENCED_TABLE_NAME IS NOT NULL',
+                    ['projects', 'parent_id']
+                ))->pluck('CONSTRAINT_NAME');
+
+                foreach ($foreignKeys as $name) {
+                    DB::statement("ALTER TABLE `projects` DROP FOREIGN KEY `{$name}`");
+                }
+
+                $indexExists = collect(DB::select('SHOW INDEX FROM `projects` WHERE Key_name = ?', ['projects_user_id_index']))->isNotEmpty();
+
+                if (! $indexExists) {
+                    DB::statement('ALTER TABLE `projects` ADD INDEX `projects_user_id_index` (`user_id`)');
+                }
             }
 
-            $indexExists = collect(DB::select('SHOW INDEX FROM `projects` WHERE Key_name = ?', ['projects_user_id_index']))->isNotEmpty();
-
-            if (! $indexExists) {
-                DB::statement('ALTER TABLE `projects` ADD INDEX `projects_user_id_index` (`user_id`)');
-            }
-
-            Schema::table('projects', function (Blueprint $table) {
+            Schema::table('projects', function (Blueprint $table) use ($driver) {
+                if ($driver !== 'mysql' && $driver !== 'mariadb') {
+                    try {
+                        $table->dropForeign(['parent_id']);
+                    } catch (Throwable $e) {
+                    }
+                    try {
+                        $table->dropIndex(['user_id', 'parent_id']);
+                    } catch (Throwable $e) {
+                    }
+                }
                 $table->dropColumn('parent_id');
             });
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MembershipRole;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use Database\Factories\TaskFactory;
@@ -9,7 +10,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Storage;
 
 class Task extends Model
@@ -58,6 +61,89 @@ class Task extends Model
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
+    }
+
+    public function collaborators(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'task_collaborators')
+            ->withPivot(['role', 'invited_by'])
+            ->withTimestamps();
+    }
+
+    public function invitations(): MorphMany
+    {
+        return $this->morphMany(Invitation::class, 'invitable');
+    }
+
+    public function hasAccessFor(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        if ($this->collaborators()->whereKey($user->id)->exists()) {
+            return true;
+        }
+
+        return $this->project_id !== null
+            && $this->project()->first()?->hasAccessFor($user) === true;
+    }
+
+    public function roleFor(User $user): ?MembershipRole
+    {
+        if ($this->user_id === $user->id) {
+            return MembershipRole::Admin;
+        }
+
+        $collaborator = $this->collaborators()->whereKey($user->id)->first();
+
+        if ($collaborator) {
+            return MembershipRole::tryParse($collaborator->pivot->role);
+        }
+
+        return $this->project_id !== null
+            ? $this->project()->first()?->roleFor($user)
+            : null;
+    }
+
+    public function canManage(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->roleFor($user)?->canManage() === true;
+    }
+
+    public function canComplete(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->roleFor($user)?->canComplete() === true;
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeAccessibleFor(Builder $query, User $user): Builder
+    {
+        return $query->where(function (Builder $q) use ($user) {
+            $q->where('user_id', $user->id)
+                ->orWhereHas('collaborators', fn (Builder $c) => $c->whereKey($user->id))
+                ->orWhereHas('project', function (Builder $p) use ($user) {
+                    $p->where(function (Builder $p2) use ($user) {
+                        $p2->where('user_id', $user->id)
+                            ->orWhereHas('members', fn (Builder $m) => $m->whereKey($user->id))
+                            ->orWhereHas('workspace', fn (Builder $w) => $w->where(function (Builder $w2) use ($user) {
+                                $w2->where('user_id', $user->id)
+                                    ->orWhereHas('members', fn (Builder $m) => $m->whereKey($user->id));
+                            }));
+                    });
+                });
+        });
     }
 
     public function totalTrackedSeconds(): int

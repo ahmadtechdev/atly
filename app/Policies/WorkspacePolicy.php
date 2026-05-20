@@ -14,7 +14,7 @@ class WorkspacePolicy
 
     public function view(User $user, Workspace $workspace): bool
     {
-        return $user->id === $workspace->user_id;
+        return $workspace->hasAccessFor($user);
     }
 
     public function create(User $user): bool
@@ -24,11 +24,16 @@ class WorkspacePolicy
 
     public function update(User $user, Workspace $workspace): bool
     {
-        return $user->id === $workspace->user_id;
+        return $workspace->canManage($user);
     }
 
     public function delete(User $user, Workspace $workspace): bool
     {
         return $user->id === $workspace->user_id;
+    }
+
+    public function invite(User $user, Workspace $workspace): bool
+    {
+        return $workspace->canManage($user);
     }
 }

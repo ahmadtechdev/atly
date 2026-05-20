@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
@@ -61,4 +62,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('workspaces/search', [WorkspaceController::class, 'search'])->name('workspaces.search');
     Route::resource('workspaces', WorkspaceController::class);
+
+    Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');
+    Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
+    Route::patch('invitations/{invitation}/accept', [InvitationController::class, 'accept'])->name('invitations.accept');
+    Route::patch('invitations/{invitation}/decline', [InvitationController::class, 'decline'])->name('invitations.decline');
+    Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
 });

@@ -1,10 +1,13 @@
 @php
+    $pendingInvitationsCount = $pendingInvitationsCount ?? 0;
+
     $nav = [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home', 'active' => request()->routeIs('dashboard')],
         ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => 'tasks', 'active' => request()->routeIs('tasks.*'), 'addAction' => 'data-open-task-modal', 'addTitle' => 'Add task'],
         ['label' => 'Projects', 'route' => 'projects.index', 'icon' => 'projects', 'active' => request()->routeIs('projects.*'), 'addAction' => 'data-open-project-modal', 'addTitle' => 'Add project'],
         ['label' => 'Workspaces', 'route' => 'workspaces.index', 'icon' => 'workspaces', 'active' => request()->routeIs('workspaces.*'), 'addAction' => 'data-open-workspace-modal', 'addTitle' => 'Add workspace'],
         ['label' => 'Time Tracker', 'route' => 'time-tracker.index', 'icon' => 'timer', 'active' => request()->routeIs('time-tracker.*')],
+        ['label' => 'Invitations', 'route' => 'invitations.index', 'icon' => 'invitations', 'active' => request()->routeIs('invitations.*'), 'badge' => $pendingInvitationsCount],
         ['label' => 'Profile', 'route' => 'profile.edit', 'icon' => 'profile', 'active' => request()->routeIs('profile.*')],
     ];
 @endphp
@@ -53,6 +56,9 @@
                     </button>
                 </div>
             @else
+                @php
+                    $badge = $item['badge'] ?? 0;
+                @endphp
                 <a
                     href="{{ route($item['route']) }}"
                     @class([
@@ -62,7 +68,12 @@
                     ])
                 >
                     <x-dashboard.nav-icon :name="$item['icon']" />
-                    <span class="sidebar-label">{{ $item['label'] }}</span>
+                    <span class="sidebar-label flex-1">{{ $item['label'] }}</span>
+                    @if ($badge > 0)
+                        <span class="sidebar-label inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-atly-contrast-bg px-1.5 py-0.5 text-[10px] font-bold leading-none text-atly-contrast-fg">
+                            {{ $badge > 99 ? '99+' : $badge }}
+                        </span>
+                    @endif
                 </a>
             @endif
         @endforeach

@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\MembershipRole;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TimeEntry;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class TaskPresenter
@@ -15,7 +18,14 @@ class TaskPresenter
      */
     public static function payload(Task $task): array
     {
-        $task->loadMissing(['attachments', 'user', 'project.workspace', 'timeEntries']);
+        $task->loadMissing(['attachments', 'user', 'project.workspace', 'timeEntries', 'collaborators']);
+
+        /** @var User|null $viewer */
+        $viewer = Auth::user();
+        $isOwner = $viewer !== null && $task->user_id === $viewer->id;
+        $viewerRole = $viewer !== null ? $task->roleFor($viewer) : null;
+        $canManage = $viewer !== null && $task->canManage($viewer);
+        $canComplete = $viewer !== null && $task->canComplete($viewer);
 
         $running = $task->runningTimeEntry();
         $totalSeconds = $task->totalTrackedSeconds();
@@ -23,7 +33,7 @@ class TaskPresenter
             ->filter(fn (TimeEntry $entry) => ! $entry->isRunning())
             ->sum(fn (TimeEntry $entry) => $entry->elapsedSeconds());
         $hasEntries = $task->timeEntries->isNotEmpty();
-        $canTrack = $task->status !== TaskStatus::Completed;
+        $canTrack = $task->status !== TaskStatus::Completed && $canComplete;
 
         return [
             'id' => $task->id,
@@ -63,6 +73,35 @@ class TaskPresenter
                 'name' => $task->user->name,
                 'initials' => $task->user->initials(),
                 'avatar_url' => $task->user->avatar_url,
+            ],
+            'owner' => [
+                'id' => $task->user->id,
+                'name' => $task->user->name,
+                'initials' => $task->user->initials(),
+                'avatar_url' => $task->user->avatar_url,
+            ],
+            'collaborators' => $task->collaborators->map(function (User $member) {
+                $role = MembershipRole::tryParse($member->pivot->role);
+
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'initials' => $member->initials(),
+                    'avatar_url' => $member->avatar_url,
+                    'role' => $role?->value,
+                    'role_label' => $role?->label(),
+                    'role_class' => $role?->colorClass(),
+                ];
+            })->values(),
+            'viewer' => [
+                'is_owner' => $isOwner,
+                'role' => $viewerRole?->value,
+                'role_label' => $viewerRole?->label(),
+                'role_class' => $viewerRole?->colorClass(),
+                'can_edit' => $canManage,
+                'can_delete' => $isOwner,
+                'can_invite' => $canManage,
+                'can_complete' => $canComplete,
             ],
             'project' => $task->project ? [
                 'id' => $task->project->id,

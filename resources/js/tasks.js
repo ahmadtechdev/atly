@@ -114,6 +114,45 @@ function renderProjectAttacher(task) {
     `;
 }
 
+function renderPersonChip(person, roleLabel = null, roleClass = null) {
+    const avatar = person.avatar_url
+        ? `<img src="${person.avatar_url}" alt="${escapeHtml(person.name)}" class="size-7 rounded-full object-cover">`
+        : `<span class="flex size-7 items-center justify-center rounded-full bg-atly-contrast-bg text-[10px] font-semibold text-atly-contrast-fg">${escapeHtml(person.initials || '?')}</span>`;
+    const role = roleLabel
+        ? `<span class="inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${roleClass || 'bg-atly-muted text-atly-ink-soft'}">${escapeHtml(roleLabel)}</span>`
+        : '';
+
+    return `
+        <div class="flex items-center gap-2 rounded-lg border border-atly-border bg-atly-surface px-2.5 py-1.5" title="${escapeHtml(person.name)}">
+            ${avatar}
+            <span class="min-w-0 flex-1 truncate text-xs font-medium text-atly-ink">${escapeHtml(person.name)}</span>
+            ${role}
+        </div>
+    `;
+}
+
+function renderCollaborators(task) {
+    const owner = task.owner || task.assignee || null;
+    const collaborators = Array.isArray(task.collaborators) ? task.collaborators : [];
+
+    if (!owner && collaborators.length === 0) {
+        return '';
+    }
+
+    const ownerHtml = owner ? renderPersonChip(owner, 'Owner', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200') : '';
+    const collabHtml = collaborators.map((c) => renderPersonChip(c, c.role_label, c.role_class)).join('');
+
+    return `
+        <div class="space-y-1.5">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Collaborators (${collaborators.length + (owner ? 1 : 0)})</p>
+            <div class="flex flex-wrap gap-2">
+                ${ownerHtml}
+                ${collabHtml}
+            </div>
+        </div>
+    `;
+}
+
 function renderTaskDetail(task) {
     const attachments = (task.attachments ?? [])
         .map((file) => {
@@ -127,19 +166,40 @@ function renderTaskDetail(task) {
 
     const isCompleted = task.is_completed;
     const titleClass = isCompleted ? 'text-atly-ink-soft line-through' : 'text-atly-ink';
+    const viewer = task.viewer || {};
+
+    const editBtn = viewer.can_edit
+        ? `<a href="${task.edit_url}" class="inline-flex rounded-xl bg-atly-contrast-bg px-4 py-2 text-sm font-semibold text-atly-contrast-fg">Edit</a>`
+        : '';
+    const inviteBtn = viewer.can_invite
+        ? `<button type="button" data-open-invite-modal data-invitable-type="task" data-invitable-id="${task.id}" data-invitable-label="${escapeHtml(task.title)}" class="inline-flex items-center gap-1.5 rounded-xl border border-atly-border bg-atly-card px-4 py-2 text-sm font-semibold text-atly-ink hover:bg-atly-muted/50">
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" /></svg>
+                Invite
+            </button>`
+        : '';
+    const deleteBtn = viewer.can_delete
+        ? `<button type="button" data-delete-task="${task.id}" data-delete-url="${task.delete_url}" class="inline-flex rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">Delete</button>`
+        : '';
+    const projectAttacher = viewer.can_edit ? renderProjectAttacher(task) : '';
+    const primaryAction = viewer.can_complete ? renderTaskPrimaryAction(task) : '';
+
+    const viewerBadge = viewer.role_label && !viewer.is_owner
+        ? `<span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${viewer.role_class || ''}">You · ${escapeHtml(viewer.role_label)}</span>`
+        : '';
 
     return `
         <div class="min-w-0 space-y-4">
-            ${renderTaskPrimaryAction(task)}
+            ${primaryAction}
             <div class="min-w-0">
                 <h3 class="font-display text-lg font-bold ${titleClass}">${escapeHtml(task.title)}</h3>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${task.status_class}">${escapeHtml(task.status_label)}</span>
                     <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${task.priority_class}">${escapeHtml(task.priority_label)}</span>
+                    ${viewerBadge}
                 </div>
             </div>
-            ${task.assignee ? `<div class="flex items-center gap-2" title="${escapeHtml(task.assignee.name)}">${assigneeAvatarHtml(task.assignee)}<span class="min-w-0 truncate text-sm font-medium text-atly-ink">${escapeHtml(task.assignee.name)}</span></div>` : ''}
-            ${renderProjectAttacher(task)}
+            ${renderCollaborators(task)}
+            ${projectAttacher}
             ${renderTimeTrackingDetail(task)}
             <div>
                 <h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-atly-ink-soft">Description</h4>
@@ -153,8 +213,7 @@ function renderTaskDetail(task) {
             </dl>
             ${attachments ? `<div class="space-y-2"><p class="text-xs font-semibold uppercase tracking-wide text-atly-ink-soft">Attachments</p>${attachments}</div>` : ''}
             <div class="flex flex-wrap gap-2 pt-1">
-                <a href="${task.edit_url}" class="inline-flex rounded-xl bg-atly-contrast-bg px-4 py-2 text-sm font-semibold text-atly-contrast-fg">Edit</a>
-                <button type="button" data-delete-task="${task.id}" data-delete-url="${task.delete_url}" class="inline-flex rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">Delete</button>
+                ${editBtn}${inviteBtn}${deleteBtn}
             </div>
         </div>
     `;
@@ -325,8 +384,17 @@ export function initTasks() {
 
         if (drawer && drawerContent) {
             drawerContent.innerHTML = html;
-            drawer.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
+
+            const isMobile = window.matchMedia('(max-width: 1279px)').matches;
+
+            if (isMobile) {
+                drawer.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            } else {
+                drawer.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+
             window.atlyInitAttachers?.(drawerContent);
         }
     };

@@ -10,7 +10,7 @@ use App\Services\TaskPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class TimeTrackerController extends Controller
@@ -53,18 +53,26 @@ class TimeTrackerController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'task_id' => [
-                'required',
-                Rule::exists('tasks', 'id')
-                    ->where(fn ($q) => $q->where('user_id', $user->id)->where('status', '!=', TaskStatus::Completed->value)),
-            ],
+            'task_id' => ['required', 'integer'],
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $this->stopAllRunning($user);
+        /** @var Task|null $task */
+        $task = Task::query()->accessibleFor($user)->find($data['task_id']);
 
-        /** @var Task $task */
-        $task = Task::query()->forUser($user)->findOrFail($data['task_id']);
+        if ($task === null || $task->status === TaskStatus::Completed) {
+            throw ValidationException::withMessages([
+                'task_id' => 'You cannot track time on this task.',
+            ]);
+        }
+
+        if (! $task->canComplete($user)) {
+            throw ValidationException::withMessages([
+                'task_id' => 'You do not have permission to track time on this task.',
+            ]);
+        }
+
+        $this->stopAllRunning($user);
 
         if ($task->status === TaskStatus::Pending) {
             $task->update(['status' => TaskStatus::InProgress]);
