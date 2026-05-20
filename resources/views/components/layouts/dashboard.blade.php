@@ -42,6 +42,8 @@
     </div>
 
     @include('tasks.partials.quick-modal')
+    @include('projects.partials.quick-modal')
+    @include('workspaces.partials.quick-modal')
 
     @auth
         <script>
@@ -49,6 +51,18 @@
                 indexUrl: @json(route('tasks.index')),
                 storeUrl: @json(route('tasks.store')),
                 tasksUrl: @json(route('tasks.index')),
+                csrf: @json(csrf_token()),
+            };
+            window.atlyProjects = {
+                indexUrl: @json(route('projects.index')),
+                storeUrl: @json(route('projects.store')),
+                searchUrl: @json(route('projects.search')),
+                csrf: @json(csrf_token()),
+            };
+            window.atlyWorkspaces = {
+                indexUrl: @json(route('workspaces.index')),
+                storeUrl: @json(route('workspaces.store')),
+                searchUrl: @json(route('workspaces.search')),
                 csrf: @json(csrf_token()),
             };
         </script>

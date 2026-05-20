@@ -10,21 +10,38 @@
 
             <x-dashboard.user-avatar :user="$task->user" size="sm" :title="$task->user->name" />
 
-            <button
-                type="button"
+            <div
                 data-task-select
-                class="task-item grid min-w-0 flex-1 items-center gap-x-2 text-left sm:gap-x-3 grid-cols-[6px_minmax(0,1fr)_auto_1.25rem] sm:grid-cols-[6px_minmax(0,1fr)_5.75rem_4.5rem_2.75rem_1.25rem]"
+                role="button"
+                tabindex="0"
+                class="task-item grid min-w-0 flex-1 cursor-pointer items-center gap-x-2 text-left sm:gap-x-3 grid-cols-[6px_minmax(0,1fr)_auto_1.25rem] sm:grid-cols-[6px_minmax(0,1fr)_5.75rem_4.5rem_2.75rem_1.25rem]"
             >
                 <span class="size-1.5 shrink-0 self-center rounded-full sm:size-2 {{ $task->priority->dotClass() }}" aria-hidden="true"></span>
 
-                <span
-                    data-task-title
-                    @class([
-                        'min-w-0 truncate self-center text-sm font-medium sm:text-base',
-                        'text-atly-ink-soft line-through' => $task->status === TaskStatus::Completed,
-                        'text-atly-ink group-hover:text-atly-accent-strong' => $task->status !== TaskStatus::Completed,
-                    ])
-                >{{ $task->title }}</span>
+                <span class="flex min-w-0 flex-col gap-0.5 self-center">
+                    <span
+                        data-task-title
+                        @class([
+                            'min-w-0 truncate text-sm font-medium sm:text-base',
+                            'text-atly-ink-soft line-through' => $task->status === TaskStatus::Completed,
+                            'text-atly-ink group-hover:text-atly-accent-strong' => $task->status !== TaskStatus::Completed,
+                        ])
+                    >{{ $task->title }}</span>
+
+                    <span
+                        data-inline-attacher
+                        data-update-url="{{ route('tasks.update-project', $task) }}"
+                        data-search-url="{{ route('projects.search') }}"
+                        data-field-name="project_id"
+                        data-entity-label="project"
+                        @if ($task->project)
+                            data-current-id="{{ $task->project->id }}"
+                            data-current-label="{{ $task->project->name }}"
+                            data-current-color="{{ $task->project->color }}"
+                            data-current-href="{{ route('projects.show', $task->project) }}"
+                        @endif
+                    ></span>
+                </span>
 
                 <span class="flex min-w-0 items-center justify-end gap-1.5 self-center sm:contents">
                     <x-dashboard.task-badge
@@ -51,7 +68,7 @@
                 <svg class="size-4 shrink-0 self-center justify-self-end text-atly-ink-soft transition group-hover:translate-x-0.5 group-hover:text-atly-ink sm:size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>
-            </button>
+            </div>
         </div>
     @empty
         <div class="px-6 py-16 text-center">

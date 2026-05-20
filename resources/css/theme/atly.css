@@ -166,3 +166,7 @@ body[data-sidebar-collapsed='true'] #dashboard-sidebar .sidebar-task-add {
     word-break: break-word;
     overflow-wrap: break-word;
 }
+
+/* Safelist project palette colors for dynamic classes */
+@source inline("{bg,text,ring,border}-{sky,emerald,amber,rose,violet,fuchsia}-{300,400,500,600,700}");
+@source inline("bg-gradient-to-r");

@@ -15,6 +15,10 @@ class StoreTaskRequest extends FormRequest
         if (! $this->filled('start_date')) {
             $this->merge(['start_date' => now()->toDateString()]);
         }
+
+        if ($this->input('project_id') === '') {
+            $this->merge(['project_id' => null]);
+        }
     }
 
     public function authorize(): bool
@@ -34,6 +38,10 @@ class StoreTaskRequest extends FormRequest
             'priority' => ['required', Rule::enum(TaskPriority::class)],
             'start_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'project_id' => [
+                'nullable',
+                Rule::exists('projects', 'id')->where(fn ($q) => $q->where('user_id', $this->user()->id)),
+            ],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,zip'],
         ];

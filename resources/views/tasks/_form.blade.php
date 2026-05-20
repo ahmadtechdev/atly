@@ -1,7 +1,29 @@
 @props(['task' => null, 'statuses', 'priorities'])
 
+@php
+    $selectedProject = $task?->project_id ? \App\Models\Project::query()->with('workspace:id,name')->whereKey($task->project_id)->first() : null;
+    $selectedProjectId = old('project_id', $task?->project_id);
+    $selectedProjectLabel = $selectedProject?->name ?? 'No project';
+    $selectedProjectColor = $selectedProject?->color ?? '';
+@endphp
+
 <div class="space-y-5">
     <x-auth.input name="title" label="Title" :value="$task?->title" placeholder="What needs to be done?" />
+
+    <div>
+        <label class="mb-1.5 block text-sm font-medium text-atly-ink">Project (optional)</label>
+        <div
+            data-searchable-picker
+            data-search-url="{{ route('projects.search') }}"
+            data-name="project_id"
+            data-empty-label="No project"
+            data-placeholder="No project"
+            data-selected-id="{{ $selectedProjectId }}"
+            data-selected-label="{{ $selectedProjectLabel }}"
+            data-selected-color="{{ $selectedProjectColor }}"
+        ></div>
+        @error('project_id')<p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>@enderror
+    </div>
 
     <div>
         <label for="description" class="mb-1.5 block text-sm font-medium text-atly-ink">Description</label>

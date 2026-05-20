@@ -50,6 +50,32 @@ function renderTaskPrimaryAction(task) {
     return `<button type="button" data-toggle-complete data-complete-url="${task.complete_url}" data-is-completed="${isCompleted ? '1' : '0'}" class="flex w-full items-center gap-3 rounded-xl border border-atly-border bg-atly-surface px-3 py-2.5 text-left text-sm transition hover:bg-atly-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atly-accent/40"><span data-complete-indicator class="flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${isCompleted ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' : 'border-atly-border bg-atly-card'}">${isCompleted ? '<svg class="size-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-7.5"/></svg>' : ''}</span><span class="font-medium text-atly-ink">${isCompleted ? 'Mark as incomplete' : 'Mark as complete'}</span></button>`;
 }
 
+function renderProjectAttacher(task) {
+    const searchUrl = window.atlyProjects?.searchUrl || '';
+    const updateUrl = task.update_project_url || '';
+
+    if (!searchUrl || !updateUrl) {
+        return '';
+    }
+
+    const project = task.project || null;
+    const currentAttrs = project
+        ? `data-current-id="${project.id}" data-current-label="${escapeHtml(project.name)}" data-current-color="${escapeHtml(project.color || '')}"`
+        : '';
+
+    return `
+        <div class="space-y-1.5">
+            <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Project</p>
+            <div data-inline-attacher
+                 data-update-url="${updateUrl}"
+                 data-search-url="${searchUrl}"
+                 data-field-name="project_id"
+                 data-entity-label="project"
+                 ${currentAttrs}></div>
+        </div>
+    `;
+}
+
 function renderTaskDetail(task) {
     const attachments = (task.attachments ?? [])
         .map((file) => {
@@ -75,6 +101,7 @@ function renderTaskDetail(task) {
                 </div>
             </div>
             ${task.assignee ? `<div class="flex items-center gap-2" title="${escapeHtml(task.assignee.name)}">${assigneeAvatarHtml(task.assignee)}<span class="min-w-0 truncate text-sm font-medium text-atly-ink">${escapeHtml(task.assignee.name)}</span></div>` : ''}
+            ${renderProjectAttacher(task)}
             <div>
                 <h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-atly-ink-soft">Description</h4>
                 ${task.description
@@ -111,6 +138,16 @@ function getFilterParams() {
 
     if (priority?.value) {
         params.set('priority', priority.value);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('project_id');
+    if (projectId) {
+        params.set('project_id', projectId);
+    }
+    const workspaceId = urlParams.get('workspace_id');
+    if (workspaceId) {
+        params.set('workspace_id', workspaceId);
     }
 
     return params;
@@ -183,6 +220,7 @@ export function initTasks() {
             const data = await response.json();
             listWrapper.innerHTML = data.html;
             bindListEvents();
+            window.atlyInitAttachers?.(listWrapper);
 
             if (activeTaskId) {
                 highlightActiveTask(activeTaskId);
@@ -225,12 +263,14 @@ export function initTasks() {
             panelEmpty.classList.add('hidden');
             panelContent.classList.remove('hidden');
             panelContent.innerHTML = html;
+            window.atlyInitAttachers?.(panelContent);
         }
 
         if (drawer && drawerContent) {
             drawerContent.innerHTML = html;
             drawer.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
+            window.atlyInitAttachers?.(drawerContent);
         }
     };
 
@@ -274,10 +314,12 @@ export function initTasks() {
 
         if (panelContent && !panelContent.classList.contains('hidden')) {
             panelContent.innerHTML = html;
+            window.atlyInitAttachers?.(panelContent);
         }
 
         if (drawerContent) {
             drawerContent.innerHTML = html;
+            window.atlyInitAttachers?.(drawerContent);
         }
     }
 
@@ -383,6 +425,10 @@ export function initTasks() {
     if (listWrapper && !listWrapper.dataset.eventsBound) {
         listWrapper.dataset.eventsBound = '1';
         listWrapper.addEventListener('click', (event) => {
+            if (event.target.closest('[data-inline-attacher]')) {
+                return;
+            }
+
             const startButton = event.target.closest('[data-start-task]');
 
             if (startButton) {
@@ -411,6 +457,26 @@ export function initTasks() {
                 }
             }
         });
+
+        listWrapper.addEventListener('keydown', (event) => {
+            if (event.target.closest('[data-inline-attacher]')) {
+                return;
+            }
+
+            const selectTarget = event.target.closest('[data-task-select]');
+
+            if (!selectTarget || (event.key !== 'Enter' && event.key !== ' ')) {
+                return;
+            }
+
+            event.preventDefault();
+            const row = selectTarget.closest('.task-row');
+
+            if (row?.dataset.taskId) {
+                showTaskDetail(row.dataset.taskId);
+            }
+        });
+
     }
 
     function bindListEvents() {

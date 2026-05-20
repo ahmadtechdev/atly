@@ -8,7 +8,9 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -41,5 +43,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('tasks/{task}/start', [TaskController::class, 'start'])->name('tasks.start');
     Route::patch('tasks/{task}/toggle-complete', [TaskController::class, 'toggleComplete'])->name('tasks.toggle-complete');
+    Route::patch('tasks/{task}/project', [TaskController::class, 'updateProject'])->name('tasks.update-project');
     Route::resource('tasks', TaskController::class);
+
+    Route::get('projects/search', [ProjectController::class, 'search'])->name('projects.search');
+    Route::patch('projects/{project}/workspace', [ProjectController::class, 'updateWorkspace'])->name('projects.update-workspace');
+    Route::resource('projects', ProjectController::class);
+
+    Route::get('workspaces/search', [WorkspaceController::class, 'search'])->name('workspaces.search');
+    Route::resource('workspaces', WorkspaceController::class);
 });

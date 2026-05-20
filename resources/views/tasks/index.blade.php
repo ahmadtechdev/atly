@@ -1,8 +1,41 @@
+@php
+    $activeProject = request()->filled('project_id')
+        ? \App\Models\Project::query()->with('workspace:id,name,color')->whereKey((int) request('project_id'))->where('user_id', auth()->id())->first()
+        : null;
+    $activeWorkspace = request()->filled('workspace_id')
+        ? \App\Models\Workspace::query()->whereKey((int) request('workspace_id'))->where('user_id', auth()->id())->first()
+        : null;
+@endphp
+
 <x-layouts.dashboard title="Tasks">
     <div class="grid gap-6 xl:grid-cols-[1fr_minmax(0,22rem)]">
         <div class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm text-atly-ink-soft">{{ $tasks->total() }} {{ $tasks->total() === 1 ? 'task' : 'tasks' }}</p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <p class="text-sm text-atly-ink-soft">{{ $tasks->total() }} {{ $tasks->total() === 1 ? 'task' : 'tasks' }}</p>
+                    @if ($activeWorkspace)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/50 px-2.5 py-1 text-xs font-medium text-atly-ink">
+                            <span @class([
+                                'size-2 rounded-full',
+                                'bg-'.$activeWorkspace->color.'-500' => $activeWorkspace->color,
+                                'bg-atly-ink-soft/50' => ! $activeWorkspace->color,
+                            ])></span>
+                            {{ $activeWorkspace->name }}
+                            <a href="{{ route('tasks.index') }}" class="ml-1 text-atly-ink-soft hover:text-atly-ink" aria-label="Clear workspace filter">×</a>
+                        </span>
+                    @endif
+                    @if ($activeProject)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-atly-muted/50 px-2.5 py-1 text-xs font-medium text-atly-ink">
+                            <span @class([
+                                'size-2 rounded-full',
+                                'bg-'.$activeProject->color.'-500' => $activeProject->color,
+                                'bg-atly-ink-soft/50' => ! $activeProject->color,
+                            ])></span>
+                            {{ $activeProject->fullName() }}
+                            <a href="{{ route('tasks.index') }}" class="ml-1 text-atly-ink-soft hover:text-atly-ink" aria-label="Clear project filter">×</a>
+                        </span>
+                    @endif
+                </div>
                 <button
                     type="button"
                     data-open-task-modal
