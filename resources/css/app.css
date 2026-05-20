@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './theme/atly.css';
+@import './alertify-atly.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

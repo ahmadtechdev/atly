@@ -121,7 +121,7 @@
                                             </button>
                                         </form>
                                     @else
-                                        <form method="POST" action="{{ route('invitations.destroy', $invitation) }}" onsubmit="return confirm('Cancel this invitation?');">
+                                        <form method="POST" action="{{ route('invitations.destroy', $invitation) }}" data-confirm="Cancel this invitation?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">

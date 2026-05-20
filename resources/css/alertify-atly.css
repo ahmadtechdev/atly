@@ -1,0 +1,138 @@
+/* ATLY-themed Alertify.js notifier + dialog overrides */
+
+.ajs-message {
+    font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-atly-border, #e4e4e7);
+    box-shadow: 0 10px 40px -12px rgb(0 0 0 / 0.25);
+    max-width: min(24rem, calc(100vw - 2rem));
+    padding: 0.875rem 1rem;
+}
+
+.ajs-message.ajs-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #6ee7b7;
+}
+
+.ajs-message.ajs-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.ajs-message.ajs-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border-color: #fcd34d;
+}
+
+.dark .ajs-message {
+    border-color: var(--color-atly-border, #3f3f46);
+    box-shadow: 0 10px 40px -12px rgb(0 0 0 / 0.55);
+}
+
+.dark .ajs-message.ajs-success {
+    background: rgb(6 78 59 / 0.45);
+    color: #a7f3d0;
+    border-color: rgb(16 185 129 / 0.45);
+}
+
+.dark .ajs-message.ajs-error {
+    background: rgb(127 29 29 / 0.45);
+    color: #fecaca;
+    border-color: rgb(248 113 113 / 0.45);
+}
+
+.dark .ajs-message.ajs-warning {
+    background: rgb(120 53 15 / 0.45);
+    color: #fde68a;
+    border-color: rgb(251 191 36 / 0.45);
+}
+
+.ajs-dimmer,
+.ajs-modal {
+    z-index: 99990;
+}
+
+.ajs-dialog {
+    font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    border-radius: 1rem;
+    border: 1px solid var(--color-atly-border, #e4e4e7);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    max-width: min(22rem, calc(100vw - 2rem));
+    padding: 0;
+    overflow: hidden;
+}
+
+.dark .ajs-dialog {
+    background: var(--color-atly-card, #18181b);
+    border-color: var(--color-atly-border, #3f3f46);
+    color: var(--color-atly-ink, #fafafa);
+}
+
+.ajs-header {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 1rem 1.25rem 0.5rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+}
+
+.ajs-body {
+    padding: 0 1.25rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-atly-ink-soft, #71717a);
+}
+
+.dark .ajs-body {
+    color: var(--color-atly-ink-soft, #a1a1aa);
+}
+
+.ajs-footer {
+    padding: 0.75rem 1rem 1rem;
+    border: none;
+    background: transparent;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.ajs-footer .ajs-button {
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: 0.625rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.ajs-footer .ajs-button.ajs-ok {
+    background: var(--color-atly-contrast-bg, #18181b);
+    color: var(--color-atly-contrast-fg, #fafafa);
+}
+
+.ajs-footer .ajs-button.ajs-cancel {
+    background: transparent;
+    border-color: var(--color-atly-border, #e4e4e7);
+    color: inherit;
+}
+
+.ajs-footer .ajs-button:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.ajs-notifier {
+    z-index: 99999;
+}
+
+.ajs-notifier .ajs-message {
+    text-shadow: none;
+}

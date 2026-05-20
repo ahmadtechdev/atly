@@ -7,8 +7,8 @@
     };
 @endphp
 
-@if (session('status') || $slot->isNotEmpty())
+@if ($slot->isNotEmpty())
     <div {{ $attributes->merge(['class' => "mb-6 rounded-xl border px-4 py-3 text-sm {$styles}"]) }}>
-        {{ $slot->isNotEmpty() ? $slot : session('status') }}
+        {{ $slot }}
     </div>
 @endif

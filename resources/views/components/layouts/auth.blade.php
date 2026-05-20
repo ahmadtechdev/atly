@@ -34,5 +34,7 @@
             &copy; {{ date('Y') }} {{ config('atly.name') }}. {{ config('atly.tagline') }}
         </p>
     </div>
+
+    @include('partials.flash-data')
 </body>
 </html>

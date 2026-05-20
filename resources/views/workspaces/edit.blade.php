@@ -15,7 +15,7 @@
             </form>
         </div>
 
-        <form method="POST" action="{{ route('workspaces.destroy', $workspace) }}" onsubmit="return confirm('Delete this workspace? Projects inside will keep existing but lose their workspace link.');" class="rounded-atly-lg border border-rose-200/70 bg-rose-50/50 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
+        <form method="POST" action="{{ route('workspaces.destroy', $workspace) }}" data-confirm="Delete this workspace? Projects inside will keep their data but lose their workspace link." class="rounded-atly-lg border border-rose-200/70 bg-rose-50/50 p-4 dark:border-rose-900/40 dark:bg-rose-950/20">
             @csrf
             @method('DELETE')
             <div class="flex flex-wrap items-center justify-between gap-3">

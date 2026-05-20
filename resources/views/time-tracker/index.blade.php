@@ -136,7 +136,7 @@
                             <div class="text-right">
                                 <p class="font-semibold tabular-nums text-atly-ink">{{ TimeEntry::formatSeconds($entry->elapsedSeconds()) }}</p>
                             </div>
-                            <form method="POST" action="{{ route('time-tracker.destroy', $entry) }}" onsubmit="return confirm('Delete this time entry?');">
+                            <form method="POST" action="{{ route('time-tracker.destroy', $entry) }}" data-confirm="Delete this time entry?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="rounded-lg p-1.5 text-atly-ink-soft transition hover:bg-atly-muted hover:text-rose-600" aria-label="Delete entry">

@@ -1,3 +1,5 @@
+import { messageFromResponse, notifyError, notifySuccess } from './notify';
+
 function debounce(fn, delay = 300) {
     let timer;
 
@@ -39,7 +41,6 @@ export function initProjects() {
         document.body.classList.remove('overflow-hidden');
         form?.reset();
         window.atlySetSearchablePicker?.(workspacePicker(), { id: '', label: '', color: '' });
-        document.getElementById('project-modal-errors')?.classList.add('hidden');
     };
 
     document.querySelectorAll('[data-open-project-modal]').forEach((button) => {
@@ -124,9 +125,7 @@ export function initProjects() {
     form?.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const errorsEl = document.getElementById('project-modal-errors');
         const submitButton = form.querySelector('[type="submit"]');
-        errorsEl?.classList.add('hidden');
         submitButton?.setAttribute('disabled', 'disabled');
 
         try {
@@ -139,27 +138,24 @@ export function initProjects() {
                 body: new FormData(form),
             });
 
-            if (response.status === 422) {
-                const data = await response.json();
-                const messages = Object.values(data.errors ?? {}).flat().join(' ');
-                if (errorsEl) {
-                    errorsEl.textContent = messages || 'Please check the form.';
-                    errorsEl.classList.remove('hidden');
-                }
-                return;
-            }
+            const data = await response.json().catch(() => ({}));
 
-            if (!response.ok) {
+            if (response.status === 422 || !response.ok) {
+                notifyError(messageFromResponse(data, 'Please check the form.'));
+
                 return;
             }
 
             closeModal();
+            notifySuccess(data.message || 'Project created successfully.');
 
             if (listWrapper) {
                 await refreshList();
             } else {
                 window.location.href = config.indexUrl;
             }
+        } catch {
+            notifyError('Network error. Please try again.');
         } finally {
             submitButton?.removeAttribute('disabled');
         }

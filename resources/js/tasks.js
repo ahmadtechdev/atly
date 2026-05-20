@@ -1,3 +1,5 @@
+import { confirmAction, messageFromResponse, notifyError, notifySuccess } from './notify';
+
 function debounce(fn, delay = 300) {
     let timer;
 
@@ -350,7 +352,6 @@ export function initTasks() {
         document.body.classList.remove('overflow-hidden');
         quickForm?.reset();
         window.atlySetSearchablePicker?.(projectPicker(), { id: '', label: '', color: '' });
-        document.getElementById('task-modal-errors')?.classList.add('hidden');
     };
 
     document.querySelectorAll('[data-open-task-modal]').forEach((button) => {
@@ -644,7 +645,9 @@ export function initTasks() {
     });
 
     async function deleteTask(button) {
-        if (!confirm('Delete this task?')) {
+        const confirmed = await confirmAction('Delete this task? This cannot be undone.');
+
+        if (!confirmed) {
             return;
         }
 
@@ -661,9 +664,13 @@ export function initTasks() {
         });
 
         if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            notifyError(messageFromResponse(data, 'Could not delete this task.'));
+
             return;
         }
 
+        notifySuccess('Task deleted successfully.');
         activeTaskId = null;
         document.getElementById('task-detail-empty')?.classList.remove('hidden');
         document.getElementById('task-detail-content')?.classList.add('hidden');
@@ -787,7 +794,6 @@ export function initTasks() {
     quickForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
 
-        const errorsEl = document.getElementById('task-modal-errors');
         const submitButton = quickForm.querySelector('[type="submit"]');
 
         submitButton?.setAttribute('disabled', 'disabled');
@@ -802,29 +808,24 @@ export function initTasks() {
                 body: new FormData(quickForm),
             });
 
-            if (response.status === 422) {
-                const data = await response.json();
-                const messages = Object.values(data.errors ?? {}).flat().join(' ');
+            const data = await response.json().catch(() => ({}));
 
-                if (errorsEl) {
-                    errorsEl.textContent = messages || 'Please check the form.';
-                    errorsEl.classList.remove('hidden');
-                }
+            if (response.status === 422 || !response.ok) {
+                notifyError(messageFromResponse(data, 'Please check the form.'));
 
-                return;
-            }
-
-            if (!response.ok) {
                 return;
             }
 
             closeModal();
+            notifySuccess(data.message || 'Task created successfully.');
 
             if (listWrapper) {
                 await refreshList();
             } else if (config.tasksUrl) {
                 window.location.href = config.tasksUrl;
             }
+        } catch {
+            notifyError('Network error. Please try again.');
         } finally {
             submitButton?.removeAttribute('disabled');
         }

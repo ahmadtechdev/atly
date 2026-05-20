@@ -1,3 +1,5 @@
+import { messageFromResponse, notifyError } from './notify';
+
 function escapeHtml(value) {
     const el = document.createElement('div');
     el.textContent = value ?? '';
@@ -231,6 +233,9 @@ function setupAttacher(root) {
             });
 
             if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                notifyError(messageFromResponse(data, 'Could not update. Please try again.'));
+
                 return;
             }
 
@@ -244,8 +249,8 @@ function setupAttacher(root) {
                 bubbles: true,
                 detail: { fieldName, id: value || null, label, color },
             }));
-        } catch (error) {
-            // swallow — keep UI responsive
+        } catch {
+            notifyError('Network error. Please try again.');
         }
     };
 

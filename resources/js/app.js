@@ -1,4 +1,5 @@
 import './bootstrap';
+import { initConfirmForms, initFlashMessages } from './notify';
 import { initDashboardCharts } from './dashboard-charts';
 import { initInlineAttachers } from './inline-attacher';
 import { initInvitations } from './invitations';
@@ -12,6 +13,8 @@ import { initTaskRowLiveTimers, initTimeTrackerClock } from './time-tracker';
 import { initWorkspaces } from './workspaces';
 
 initTheme();
+initFlashMessages();
+initConfirmForms();
 initSidebar();
 initDashboardCharts();
 initTasks();

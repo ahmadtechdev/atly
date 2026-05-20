@@ -1,3 +1,5 @@
+import { messageFromResponse, notifyError, notifySuccess, notifyWarning } from './notify';
+
 export function initInvitations() {
     const modal = document.getElementById('invite-modal');
 
@@ -12,23 +14,13 @@ export function initInvitations() {
     const messageInput = form.querySelector('textarea[name="message"]');
     const kindLabel = modal.querySelector('[data-invite-kind]');
     const targetLabel = modal.querySelector('[data-invite-target]');
-    const errorsEl = modal.querySelector('#invite-modal-errors');
-    const successEl = modal.querySelector('#invite-modal-success');
     const submitBtn = form.querySelector('[data-invite-submit]');
 
     const config = window.atlyInvitations || {};
 
     const titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');
 
-    const clearMessages = () => {
-        errorsEl.classList.add('hidden');
-        errorsEl.textContent = '';
-        successEl.classList.add('hidden');
-        successEl.textContent = '';
-    };
-
     const openModal = ({ type, id, label }) => {
-        clearMessages();
         form.reset();
         typeInput.value = type || '';
         idInput.value = id || '';
@@ -42,7 +34,6 @@ export function initInvitations() {
     const closeModal = () => {
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
-        clearMessages();
     };
 
     document.addEventListener('click', (event) => {
@@ -72,11 +63,9 @@ export function initInvitations() {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        clearMessages();
 
         if (!config.storeUrl || !config.csrf) {
-            errorsEl.textContent = 'Invitations are not available right now.';
-            errorsEl.classList.remove('hidden');
+            notifyError('Invitations are not available right now.');
             return;
         }
 
@@ -107,35 +96,23 @@ export function initInvitations() {
             const data = await response.json().catch(() => ({}));
 
             if (response.ok) {
-                const pendingRegistration = data.recipient_status === 'pending_registration';
+                closeModal();
 
-                successEl.textContent = data.message || 'Invitation sent.';
-                successEl.classList.remove('hidden');
+                const pendingRegistration = data.recipient_status === 'pending_registration';
+                const text = data.message || 'Invitation sent.';
 
                 if (pendingRegistration) {
-                    successEl.classList.remove('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
-                    successEl.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-800');
+                    notifyWarning(text, 12);
                 } else {
-                    successEl.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
-                    successEl.classList.remove('border-amber-200', 'bg-amber-50', 'text-amber-800');
+                    notifySuccess(text);
                 }
 
-                emailInput.value = '';
-                messageInput.value = '';
-
-                setTimeout(closeModal, pendingRegistration ? 3500 : 1200);
                 return;
             }
 
-            const messages = data.errors
-                ? Object.values(data.errors).flat().join(' ')
-                : data.message || 'Unable to send invitation.';
-
-            errorsEl.textContent = messages;
-            errorsEl.classList.remove('hidden');
-        } catch (error) {
-            errorsEl.textContent = 'Network error. Please try again.';
-            errorsEl.classList.remove('hidden');
+            notifyError(messageFromResponse(data, 'Unable to send invitation.'));
+        } catch {
+            notifyError('Network error. Please try again.');
         } finally {
             submitBtn.disabled = false;
         }

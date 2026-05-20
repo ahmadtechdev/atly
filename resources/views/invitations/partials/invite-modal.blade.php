@@ -73,9 +73,6 @@
                     ></textarea>
                 </div>
 
-                <div id="invite-modal-errors" class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
-                <div id="invite-modal-success" class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"></div>
-
                 <div class="flex flex-wrap gap-3">
                     <button type="submit" data-invite-submit class="inline-flex items-center gap-2 rounded-xl bg-atly-contrast-bg px-4 py-2.5 text-sm font-semibold text-atly-contrast-fg shadow-sm transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60">
                         <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>

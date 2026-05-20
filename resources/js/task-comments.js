@@ -1,3 +1,5 @@
+import { confirmAction, messageFromResponse, notifyError, notifySuccess } from './notify';
+
 function escapeHtml(value) {
     const el = document.createElement('div');
     el.textContent = value ?? '';
@@ -57,17 +59,11 @@ export function initTaskComments() {
             event.preventDefault();
 
             const textarea = form.querySelector('textarea[name="body"]');
-            const errorEl = form.querySelector('[data-comment-error]');
             const submitBtn = form.querySelector('[type="submit"]');
             const body = (textarea?.value || '').trim();
 
-            errorEl?.classList.add('hidden');
-
             if (!body) {
-                if (errorEl) {
-                    errorEl.textContent = 'Comment cannot be empty.';
-                    errorEl.classList.remove('hidden');
-                }
+                notifyError('Comment cannot be empty.');
 
                 return;
             }
@@ -88,35 +84,15 @@ export function initTaskComments() {
                     body: formData,
                 });
 
-                if (response.status === 422) {
-                    const data = await response.json();
-                    if (errorEl) {
-                        errorEl.textContent = Object.values(data.errors || {}).flat().join(' ') || 'Please check your comment.';
-                        errorEl.classList.remove('hidden');
-                    }
-
-                    return;
-                }
-
-                if (response.status === 403) {
-                    if (errorEl) {
-                        errorEl.textContent = 'You no longer have permission to comment on this task.';
-                        errorEl.classList.remove('hidden');
-                    }
-
-                    return;
-                }
+                const data = await response.json().catch(() => ({}));
 
                 if (!response.ok) {
-                    if (errorEl) {
-                        errorEl.textContent = 'Something went wrong. Try again.';
-                        errorEl.classList.remove('hidden');
-                    }
+                    notifyError(messageFromResponse(data, 'Could not post your comment.'));
 
                     return;
                 }
 
-                const { comment } = await response.json();
+                const { comment } = data;
 
                 removeEmptyState();
                 list?.insertAdjacentHTML('beforeend', renderComment(comment));
@@ -124,6 +100,9 @@ export function initTaskComments() {
                 if (textarea) {
                     textarea.value = '';
                 }
+                notifySuccess('Comment posted.');
+            } catch {
+                notifyError('Network error. Please try again.');
             } finally {
                 submitBtn?.removeAttribute('disabled');
             }
@@ -136,28 +115,39 @@ export function initTaskComments() {
                 return;
             }
 
-            if (!confirm('Delete this comment?')) {
+            const confirmed = await confirmAction('Delete this comment?');
+
+            if (!confirmed) {
                 return;
             }
 
             const deleteUrl = deleteBtn.dataset.deleteUrl;
-            const response = await fetch(deleteUrl, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    Accept: 'application/json',
-                },
-                body: new URLSearchParams({ _method: 'DELETE' }),
-            });
 
-            if (!response.ok) {
-                return;
+            try {
+                const response = await fetch(deleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        Accept: 'application/json',
+                    },
+                    body: new URLSearchParams({ _method: 'DELETE' }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    notifyError(messageFromResponse(data, 'Could not delete this comment.'));
+
+                    return;
+                }
+
+                const node = deleteBtn.closest('[data-comment-id]');
+                node?.remove();
+                setCount(-1);
+                notifySuccess('Comment deleted.');
+            } catch {
+                notifyError('Network error. Please try again.');
             }
-
-            const node = deleteBtn.closest('[data-comment-id]');
-            node?.remove();
-            setCount(-1);
         });
     });
 }

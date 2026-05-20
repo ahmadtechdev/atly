@@ -33,13 +33,9 @@
     </header>
 
     <main class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        @if (session('status'))
-            <div class="mb-6 rounded-xl border border-atly-accent/40 bg-atly-muted/50 px-4 py-3 text-sm text-atly-ink">
-                {{ session('status') }}
-            </div>
-        @endif
-
         {{ $slot }}
     </main>
+
+    @include('partials.flash-data')
 </body>
 </html>
