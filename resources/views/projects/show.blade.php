@@ -135,6 +135,9 @@
             :members="$project->members"
             :canInvite="$canManage"
             :inviteTarget="['type' => 'project', 'id' => $project->id, 'label' => $project->name]"
+            :viewerIsOwner="auth()->id() === $project->user_id"
+            :updateUrlPattern="route('projects.members.update', [$project->id, '__USER_ID__'])"
+            :removeUrlPattern="route('projects.members.destroy', [$project->id, '__USER_ID__'])"
         />
 
         <section class="rounded-atly-lg border border-atly-border bg-atly-card shadow-atly">

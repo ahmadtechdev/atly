@@ -116,41 +116,103 @@ function renderProjectAttacher(task) {
     `;
 }
 
-function renderPersonChip(person, roleLabel = null, roleClass = null) {
-    const avatar = person.avatar_url
-        ? `<img src="${person.avatar_url}" alt="${escapeHtml(person.name)}" class="size-7 rounded-full object-cover">`
-        : `<span class="flex size-7 items-center justify-center rounded-full bg-atly-contrast-bg text-[10px] font-semibold text-atly-contrast-fg">${escapeHtml(person.initials || '?')}</span>`;
-    const role = roleLabel
-        ? `<span class="inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${roleClass || 'bg-atly-muted text-atly-ink-soft'}">${escapeHtml(roleLabel)}</span>`
-        : '';
+function renderPersonAvatar(person, sizeClass = 'size-6') {
+    if (person?.avatar_url) {
+        return `<img src="${person.avatar_url}" alt="${escapeHtml(person.name)}" class="${sizeClass} rounded-full object-cover ring-2 ring-atly-card">`;
+    }
+
+    return `<span class="flex ${sizeClass} items-center justify-center rounded-full bg-atly-muted text-[9px] font-semibold text-atly-ink ring-2 ring-atly-card">${escapeHtml(person?.initials || '?')}</span>`;
+}
+
+function renderRoleMenu(person) {
+    if (!person.update_url || !person.remove_url) {
+        return '';
+    }
+
+    const options = [
+        { value: 'admin', label: 'Admin', cls: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200', desc: 'Can invite & edit settings.' },
+        { value: 'assignee', label: 'Assignee', cls: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200', desc: 'Can complete work & comment.' },
+        { value: 'viewer', label: 'Viewer', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200', desc: 'Can view & comment.' },
+        { value: 'guest', label: 'Guest', cls: 'bg-atly-muted text-atly-ink-soft', desc: 'View only, no comments.' },
+    ].map((o) => `
+        <button type="button" data-member-set-role="${o.value}" class="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-atly-muted/50">
+            <span class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${o.cls}">${o.label}</span>
+            <span class="min-w-0 flex-1 text-[10px] leading-snug text-atly-ink-soft">${o.desc}</span>
+        </button>
+    `).join('');
 
     return `
-        <div class="flex items-center gap-2 rounded-lg border border-atly-border bg-atly-surface px-2.5 py-1.5" title="${escapeHtml(person.name)}">
-            ${avatar}
-            <span class="min-w-0 flex-1 truncate text-xs font-medium text-atly-ink">${escapeHtml(person.name)}</span>
-            ${role}
+        <div data-member-menu class="absolute right-0 top-full z-30 mt-1 hidden w-56 rounded-xl border border-atly-border bg-atly-card p-1.5 shadow-atly-lg">
+            <p class="px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-atly-ink-soft">Change role</p>
+            ${options}
+            <div class="my-1 border-t border-atly-border"></div>
+            <button type="button" data-member-remove class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0V4.5a2.25 2.25 0 0 0-2.25-2.25H7.022a2.25 2.25 0 0 0-2.25 2.25v1.29"/></svg>
+                Remove from task
+            </button>
         </div>
+    `;
+}
+
+function renderCollaboratorRow(person, viewer) {
+    const roleClass = person.role_class || 'bg-atly-muted text-atly-ink-soft';
+    const isOwnerEntry = person.is_owner === true;
+    const roleLabel = isOwnerEntry ? 'Owner' : (person.role_label || '');
+    const canManage = viewer?.is_owner && person.update_url && !isOwnerEntry;
+
+    const roleNode = canManage
+        ? `<span class="relative inline-flex" data-member-row data-member-name="${escapeHtml(person.name)}" data-current-role="${escapeHtml(person.role || '')}" data-update-url="${person.update_url}" data-remove-url="${person.remove_url}">
+                <button type="button" data-member-menu-trigger class="inline-flex items-center gap-1 rounded-md border border-transparent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide transition ${roleClass} hover:border-atly-border">
+                    <span data-member-role-label>${escapeHtml(roleLabel || 'Set role')}</span>
+                    <svg class="size-3 opacity-70" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+                ${renderRoleMenu(person)}
+           </span>`
+        : (roleLabel
+            ? `<span class="inline-flex shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${isOwnerEntry ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : roleClass}">${escapeHtml(roleLabel)}</span>`
+            : '');
+
+    return `
+        <li class="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-atly-muted/30">
+            ${renderPersonAvatar(person, 'size-6')}
+            <span class="min-w-0 flex-1 truncate text-[11px] font-medium text-atly-ink">${escapeHtml(person.name)}</span>
+            ${roleNode}
+        </li>
     `;
 }
 
 function renderCollaborators(task) {
     const owner = task.owner || task.assignee || null;
     const collaborators = Array.isArray(task.collaborators) ? task.collaborators : [];
+    const viewer = task.viewer || {};
+    const total = collaborators.length + (owner ? 1 : 0);
 
-    if (!owner && collaborators.length === 0) {
+    if (total === 0) {
         return '';
     }
 
-    const ownerHtml = owner ? renderPersonChip(owner, 'Owner', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200') : '';
-    const collabHtml = collaborators.map((c) => renderPersonChip(c, c.role_label, c.role_class)).join('');
+    const stack = [owner, ...collaborators]
+        .filter(Boolean)
+        .slice(0, 5)
+        .map((p) => `<span class="-ml-1.5 first:ml-0">${renderPersonAvatar(p, 'size-6')}</span>`)
+        .join('');
+
+    const more = total > 5
+        ? `<span class="-ml-1.5 flex size-6 items-center justify-center rounded-full bg-atly-muted text-[9px] font-semibold text-atly-ink ring-2 ring-atly-card">+${total - 5}</span>`
+        : '';
+
+    const ownerRow = owner ? renderCollaboratorRow({ ...owner, is_owner: true }, viewer) : '';
+    const memberRows = collaborators.map((c) => renderCollaboratorRow(c, viewer)).join('');
 
     return `
         <div class="space-y-1.5">
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Collaborators (${collaborators.length + (owner ? 1 : 0)})</p>
-            <div class="flex flex-wrap gap-2">
-                ${ownerHtml}
-                ${collabHtml}
+            <div class="flex items-center justify-between">
+                <p class="text-[10px] font-semibold uppercase tracking-wide text-atly-ink-soft">Members (${total})</p>
+                <div class="flex items-center">${stack}${more}</div>
             </div>
+            <ul class="space-y-0.5 rounded-lg border border-atly-border/60 bg-atly-surface p-1">
+                ${ownerRow}${memberRows}
+            </ul>
         </div>
     `;
 }

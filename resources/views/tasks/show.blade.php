@@ -167,6 +167,9 @@
                 :members="$task->collaborators"
                 :canInvite="$canManage"
                 :inviteTarget="['type' => 'task', 'id' => $task->id, 'label' => $task->title]"
+                :viewerIsOwner="auth()->id() === $task->user_id"
+                :updateUrlPattern="route('tasks.collaborators.update', [$task->id, '__USER_ID__'])"
+                :removeUrlPattern="route('tasks.collaborators.destroy', [$task->id, '__USER_ID__'])"
             />
 
             @if ($task->project)

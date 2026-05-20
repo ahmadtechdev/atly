@@ -88,6 +88,9 @@
             :members="$workspace->members"
             :canInvite="$canManage"
             :inviteTarget="['type' => 'workspace', 'id' => $workspace->id, 'label' => $workspace->name]"
+            :viewerIsOwner="auth()->id() === $workspace->user_id"
+            :updateUrlPattern="route('workspaces.members.update', [$workspace->id, '__USER_ID__'])"
+            :removeUrlPattern="route('workspaces.members.destroy', [$workspace->id, '__USER_ID__'])"
         />
     </div>
 </x-layouts.dashboard>

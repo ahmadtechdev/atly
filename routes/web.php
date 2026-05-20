@@ -10,10 +10,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectMemberController;
+use App\Http\Controllers\TaskCollaboratorController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TimeTrackerController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\WorkspaceMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -50,6 +53,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('tasks/{task}/project', [TaskController::class, 'updateProject'])->name('tasks.update-project');
     Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
+    Route::patch('tasks/{task}/collaborators/{member}', [TaskCollaboratorController::class, 'update'])->name('tasks.collaborators.update');
+    Route::delete('tasks/{task}/collaborators/{member}', [TaskCollaboratorController::class, 'destroy'])->name('tasks.collaborators.destroy');
     Route::resource('tasks', TaskController::class);
 
     Route::get('time-tracker', [TimeTrackerController::class, 'index'])->name('time-tracker.index');
@@ -61,9 +66,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('projects/{project}/workspace', [ProjectController::class, 'updateWorkspace'])->name('projects.update-workspace');
     Route::patch('projects/{project}/complete', [ProjectController::class, 'complete'])->name('projects.complete');
     Route::patch('projects/{project}/reopen', [ProjectController::class, 'reopen'])->name('projects.reopen');
+    Route::patch('projects/{project}/members/{member}', [ProjectMemberController::class, 'update'])->name('projects.members.update');
+    Route::delete('projects/{project}/members/{member}', [ProjectMemberController::class, 'destroy'])->name('projects.members.destroy');
     Route::resource('projects', ProjectController::class);
 
     Route::get('workspaces/search', [WorkspaceController::class, 'search'])->name('workspaces.search');
+    Route::patch('workspaces/{workspace}/members/{member}', [WorkspaceMemberController::class, 'update'])->name('workspaces.members.update');
+    Route::delete('workspaces/{workspace}/members/{member}', [WorkspaceMemberController::class, 'destroy'])->name('workspaces.members.destroy');
     Route::resource('workspaces', WorkspaceController::class);
 
     Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');

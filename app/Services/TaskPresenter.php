@@ -91,7 +91,7 @@ class TaskPresenter
                 'initials' => $task->user->initials(),
                 'avatar_url' => $task->user->avatar_url,
             ],
-            'collaborators' => $task->collaborators->map(function (User $member) {
+            'collaborators' => $task->collaborators->map(function (User $member) use ($task, $isOwner) {
                 $role = MembershipRole::tryParse($member->pivot->role);
 
                 return [
@@ -102,6 +102,8 @@ class TaskPresenter
                     'role' => $role?->value,
                     'role_label' => $role?->label(),
                     'role_class' => $role?->colorClass(),
+                    'update_url' => $isOwner ? route('tasks.collaborators.update', [$task->id, $member->id]) : null,
+                    'remove_url' => $isOwner ? route('tasks.collaborators.destroy', [$task->id, $member->id]) : null,
                 ];
             })->values(),
             'viewer' => [
