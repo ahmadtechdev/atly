@@ -7,10 +7,10 @@
         $colors = ['sky', 'emerald', 'amber', 'rose', 'violet', 'fuchsia'];
     @endphp
 
-    <div id="project-quick-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-        <div data-close-project-modal class="absolute inset-0 bg-atly-ink/50 backdrop-blur-sm"></div>
-        <div class="relative flex min-h-full items-center justify-center p-4">
-            <div class="w-full max-w-lg rounded-atly-lg border border-atly-border bg-atly-card p-6 shadow-atly-lg sm:p-8" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+    <div id="project-quick-modal" class="fixed inset-0 z-50 hidden overflow-y-auto overscroll-contain" aria-hidden="true">
+        <div data-close-project-modal class="fixed inset-0 bg-atly-ink/50 backdrop-blur-sm"></div>
+        <div class="pointer-events-none relative flex min-h-full items-start justify-center p-4 sm:items-center sm:p-6">
+            <div class="pointer-events-auto w-full max-w-lg rounded-atly-lg border border-atly-border bg-atly-card p-5 shadow-atly-lg sm:p-7" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
                 <div class="mb-6 flex items-center justify-between">
                     <h2 id="project-modal-title" class="font-display text-xl font-bold text-atly-ink">New project</h2>
                     <button type="button" data-close-project-modal class="rounded-lg p-2 text-atly-ink-soft hover:bg-atly-muted hover:text-atly-ink" aria-label="Close">

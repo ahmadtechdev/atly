@@ -1,7 +1,7 @@
-<div id="invite-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
-    <div data-close-invite-modal class="absolute inset-0 bg-atly-ink/50 backdrop-blur-sm"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-atly-lg border border-atly-border bg-atly-card p-6 shadow-atly-lg sm:p-7" role="dialog" aria-modal="true" aria-labelledby="invite-modal-title">
+<div id="invite-modal" class="fixed inset-0 z-50 hidden overflow-y-auto overscroll-contain" aria-hidden="true">
+    <div data-close-invite-modal class="fixed inset-0 bg-atly-ink/50 backdrop-blur-sm"></div>
+    <div class="pointer-events-none relative flex min-h-full items-start justify-center p-4 sm:items-center sm:p-6">
+        <div class="pointer-events-auto w-full max-w-md rounded-atly-lg border border-atly-border bg-atly-card p-5 shadow-atly-lg sm:p-7" role="dialog" aria-modal="true" aria-labelledby="invite-modal-title">
             <div class="mb-5 flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <h2 id="invite-modal-title" class="font-display text-xl font-bold text-atly-ink">Invite someone</h2>

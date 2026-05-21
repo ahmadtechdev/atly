@@ -12,15 +12,32 @@
     ];
 @endphp
 
+<div
+    id="dashboard-sidebar-backdrop"
+    class="fixed inset-0 z-30 hidden bg-atly-ink/40 backdrop-blur-sm lg:hidden"
+    aria-hidden="true"
+></div>
+
 <aside
     id="dashboard-sidebar"
-    class="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-atly-border bg-atly-card transition-all duration-300"
+    class="fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 -translate-x-full flex-col border-r border-atly-border bg-atly-card transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0"
+    aria-label="Primary navigation"
 >
     <div class="sidebar-brand flex items-center gap-3 border-b border-atly-border px-4 py-5">
         <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-atly-contrast-bg text-sm font-bold text-atly-contrast-fg">
             {{ strtoupper(substr(config('atly.name'), 0, 1)) }}
         </span>
-        <span class="sidebar-brand-text font-display text-lg font-bold text-atly-ink">{{ config('atly.name') }}</span>
+        <span class="sidebar-brand-text flex-1 font-display text-lg font-bold text-atly-ink">{{ config('atly.name') }}</span>
+        <button
+            type="button"
+            id="sidebar-mobile-close"
+            class="rounded-lg p-1.5 text-atly-ink-soft hover:bg-atly-muted hover:text-atly-ink lg:hidden"
+            aria-label="Close menu"
+        >
+            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
 
     <nav class="flex-1 space-y-1 px-3 py-4" aria-label="Dashboard">
@@ -79,7 +96,7 @@
         @endforeach
     </nav>
 
-    <div class="border-t border-atly-border p-3">
+    <div class="hidden border-t border-atly-border p-3 lg:block">
         <button
             id="sidebar-toggle"
             type="button"
