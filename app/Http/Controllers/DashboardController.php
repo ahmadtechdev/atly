@@ -5,16 +5,29 @@ namespace App\Http\Controllers;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request): View|JsonResponse
     {
         $user = $request->user();
         $baseQuery = Task::query()->accessibleFor($user);
+
+        $calendarPayload = $this->buildCalendar($request, $baseQuery);
+
+        if ($request->boolean('calendar_only')) {
+            return response()->json([
+                'html' => view('dashboard.partials.calendar', $calendarPayload)->render(),
+                'month_label' => $calendarPayload['calendarMonth']->format('F Y'),
+                'month' => $calendarPayload['calendarMonth']->format('Y-m'),
+            ]);
+        }
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
@@ -72,6 +85,22 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        return view('dashboard.index', [
+            'stats' => $stats,
+            'completionRate' => $completionRate,
+            'statusChart' => $statusChart,
+            'priorityChart' => $priorityChart,
+            'weeklyActivity' => $weeklyActivity,
+            'upcomingTasks' => $upcomingTasks,
+            ...$calendarPayload,
+        ]);
+    }
+
+    /**
+     * @return array{calendarMonth: Carbon, calendarWeeks: array<int, array<int, array{date: Carbon, in_month: bool, is_today: bool, tasks: Collection}>>}
+     */
+    private function buildCalendar(Request $request, Builder $baseQuery): array
+    {
         $calendarMonth = Carbon::parse($request->input('month', now()->format('Y-m')))->startOfMonth();
         $calendarStart = $calendarMonth->copy()->startOfWeek();
         $calendarEnd = $calendarMonth->copy()->endOfMonth()->endOfWeek();
@@ -99,15 +128,9 @@ class DashboardController extends Controller
             $calendarWeeks[] = $week;
         }
 
-        return view('dashboard.index', [
-            'stats' => $stats,
-            'completionRate' => $completionRate,
-            'statusChart' => $statusChart,
-            'priorityChart' => $priorityChart,
-            'weeklyActivity' => $weeklyActivity,
-            'upcomingTasks' => $upcomingTasks,
+        return [
             'calendarMonth' => $calendarMonth,
             'calendarWeeks' => $calendarWeeks,
-        ]);
+        ];
     }
 }

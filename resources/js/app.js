@@ -1,5 +1,6 @@
 import './bootstrap';
 import { initConfirmForms, initFlashMessages } from './notify';
+import { initDashboardCalendar } from './dashboard-calendar';
 import { initDashboardCharts } from './dashboard-charts';
 import { initInlineAttachers } from './inline-attacher';
 import { initInvitations } from './invitations';
@@ -18,6 +19,7 @@ initFlashMessages();
 initConfirmForms();
 initSidebar();
 initDashboardCharts();
+initDashboardCalendar();
 initTasks();
 initProjects();
 initWorkspaces();
