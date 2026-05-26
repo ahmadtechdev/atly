@@ -1,5 +1,6 @@
 import './bootstrap';
 import { initConfirmForms, initFlashMessages } from './notify';
+import { initBlueprint } from './blueprint';
 import { initDashboardCalendar } from './dashboard-calendar';
 import { initDashboardCharts } from './dashboard-charts';
 import { initInlineAttachers } from './inline-attacher';
@@ -30,3 +31,4 @@ initMemberMenus();
 initTaskComments();
 initTimeTrackerClock();
 initTaskRowLiveTimers();
+initBlueprint();

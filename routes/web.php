@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\BlueprintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
@@ -74,6 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('workspaces/{workspace}/members/{member}', [WorkspaceMemberController::class, 'update'])->name('workspaces.members.update');
     Route::delete('workspaces/{workspace}/members/{member}', [WorkspaceMemberController::class, 'destroy'])->name('workspaces.members.destroy');
     Route::resource('workspaces', WorkspaceController::class);
+
+    Route::get('blueprint', [BlueprintController::class, 'index'])->name('blueprint.index');
+    Route::post('blueprint/generate', [BlueprintController::class, 'generate'])->name('blueprint.generate');
+    Route::post('blueprint', [BlueprintController::class, 'store'])->name('blueprint.store');
 
     Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');
     Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
