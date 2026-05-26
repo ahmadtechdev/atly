@@ -51,31 +51,12 @@
 
         @if ($hasAvailableModels)
             {{-- Step 1: Input form --}}
-            <section id="blueprint-form-section" class="rounded-atly-lg border border-atly-border bg-atly-card p-5 shadow-atly sm:p-7">
+            <section id="blueprint-form-section" class="relative rounded-atly-lg border border-atly-border bg-atly-card p-5 shadow-atly sm:p-7">
                 <h3 class="font-display text-lg font-bold text-atly-ink">1. Describe your project</h3>
                 <p class="mt-1 text-sm text-atly-ink-soft">Provide a written brief, upload a document, or both.</p>
 
                 <form id="blueprint-form" class="mt-6 space-y-5" enctype="multipart/form-data">
                     @csrf
-
-                    <div>
-                        <label for="bp-model" class="mb-1.5 block text-sm font-medium text-atly-ink">AI model</label>
-                        <select
-                            id="bp-model"
-                            name="model"
-                            required
-                            class="w-full rounded-xl border border-atly-border bg-atly-surface px-4 py-3 text-sm text-atly-ink focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30"
-                        >
-                            @foreach ($models as $model)
-                                <option value="{{ $model['id'] }}">
-                                    {{ $model['label'] }}
-                                    @if ($model['tagline']) — {{ $model['tagline'] }} @endif
-                                    @if ($model['remaining'] !== null) ({{ $model['remaining'] }} of {{ $model['monthly_limit'] }} left this month) @endif
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-xs text-atly-ink-soft">Models are powered by API keys provided by the team — pick whichever feels right.</p>
-                    </div>
 
                     <div>
                         <label for="bp-description" class="mb-1.5 block text-sm font-medium text-atly-ink">Project description</label>
@@ -153,19 +134,53 @@
 
                     <div id="bp-form-errors" class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
 
-                    <div class="flex flex-wrap gap-3 border-t border-atly-border pt-5">
+                    <div class="flex flex-col gap-3 border-t border-atly-border pt-5 sm:flex-row sm:flex-wrap sm:items-center">
                         <x-landing.button type="submit" id="bp-generate-btn">
                             <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 0 0-3.09 3.091Z" /></svg>
                             <span id="bp-generate-label">Generate plan</span>
                         </x-landing.button>
+
+                        <label class="flex items-center gap-2 text-xs text-atly-ink-soft">
+                            <span class="hidden sm:inline">using</span>
+                            <select
+                                id="bp-model"
+                                name="model"
+                                required
+                                class="rounded-lg border border-atly-border bg-atly-surface px-2.5 py-1.5 text-xs font-medium text-atly-ink focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30"
+                            >
+                                @foreach ($models as $model)
+                                    <option value="{{ $model['id'] }}">
+                                        {{ $model['label'] }}{{ $model['remaining'] !== null ? ' ('.$model['remaining'].' left)' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+
                         @if ($donationUrl)
-                            <a href="{{ $donationUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-atly-ink-soft hover:text-atly-ink">
+                            <a href="{{ $donationUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-sm font-semibold text-atly-ink-soft hover:text-atly-ink sm:ml-auto">
                                 <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
                                 Support this feature
                             </a>
                         @endif
                     </div>
                 </form>
+
+                {{-- Generation loader overlay --}}
+                <div id="bp-loading-overlay" class="absolute inset-0 z-20 hidden items-center justify-center rounded-atly-lg bg-atly-card/90 backdrop-blur-md">
+                    <div class="px-6 text-center">
+                        <div class="relative mx-auto size-16">
+                            <div class="absolute inset-0 animate-ping rounded-full bg-atly-accent/40"></div>
+                            <div class="absolute inset-0 animate-pulse rounded-full bg-atly-accent/20" style="animation-delay: 0.4s"></div>
+                            <div class="relative flex size-16 items-center justify-center rounded-full bg-atly-contrast-bg text-atly-contrast-fg shadow-atly-lg">
+                                <svg class="size-7 animate-spin" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 0 0-3.09 3.091Z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <p id="bp-loader-text" class="mt-5 font-display text-base font-bold text-atly-ink transition-opacity duration-200 sm:text-lg" style="opacity: 1">Analyzing your brief…</p>
+                        <p class="mt-1 text-xs text-atly-ink-soft sm:text-sm">Usually takes 5–15 seconds. Hang tight.</p>
+                    </div>
+                </div>
             </section>
 
             {{-- Step 2: Draft review --}}
@@ -229,10 +244,17 @@
 
                 <div id="bp-finalize-errors" class="mt-4 hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
 
+                {{-- Team-mode helper banner --}}
+                <div id="bp-team-banner" class="mt-5 hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                    <p class="font-semibold">Team blueprint — invites required</p>
+                    <p class="mt-1 text-xs">Add an email for each team member. We'll send invitations now and create the real project once everyone accepts. You can manage the draft any time from <strong>Blueprint Drafts</strong>.</p>
+                </div>
+
                 <div class="mt-6 flex flex-wrap gap-3 border-t border-atly-border pt-5">
                     <x-landing.button type="button" id="bp-finalize-btn">
-                        Confirm & create project
+                        <span id="bp-finalize-label">Confirm &amp; create project</span>
                     </x-landing.button>
+                    <x-landing.button type="button" variant="secondary" id="bp-save-draft-btn">Save as draft</x-landing.button>
                     <x-landing.button type="button" variant="secondary" id="bp-cancel-draft">Discard draft</x-landing.button>
                 </div>
             </section>
@@ -240,14 +262,37 @@
     </div>
 
     <template id="bp-member-template">
-        <div class="bp-member grid gap-2 sm:grid-cols-[1fr_1fr_120px_auto]" data-member-row>
-            <input type="text" data-field="name" placeholder="Member name" class="rounded-xl border border-atly-border bg-atly-card px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30">
-            <input type="text" data-field="skill" placeholder="Skill (e.g. Frontend)" class="rounded-xl border border-atly-border bg-atly-card px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30">
-            <input type="number" data-field="split" min="0" max="100" placeholder="% (opt)" class="rounded-xl border border-atly-border bg-atly-card px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30">
-            <button type="button" data-remove-member class="rounded-lg p-2 text-atly-ink-soft hover:bg-red-50 hover:text-red-600" aria-label="Remove member">
-                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
+        <div class="bp-member space-y-2 rounded-xl border border-atly-border bg-atly-card p-3" data-member-row>
+            <div class="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto] sm:items-start">
+                <input type="text" data-field="name" placeholder="Member name" class="rounded-lg border border-atly-border bg-atly-surface px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30">
+
+                <div class="bp-skill-tags flex min-h-[2.4rem] flex-wrap items-center gap-1.5 rounded-lg border border-atly-border bg-atly-surface px-2 py-1.5 focus-within:border-atly-accent focus-within:ring-2 focus-within:ring-atly-accent/30" data-skill-tags>
+                    <input
+                        type="text"
+                        data-skill-input
+                        placeholder="Skills (press space)"
+                        class="min-w-[8rem] flex-1 border-0 bg-transparent p-1 text-sm text-atly-ink placeholder:text-atly-ink-soft/60 focus:outline-none focus:ring-0"
+                    >
+                </div>
+
+                <button type="button" data-remove-member class="self-center rounded-lg p-2 text-atly-ink-soft hover:bg-red-50 hover:text-red-600" aria-label="Remove member">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="grid gap-2 sm:grid-cols-[1fr_110px]">
+                <input type="email" data-field="email" placeholder="Email (required to send invite)" class="rounded-lg border border-atly-border bg-atly-surface px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30" data-member-email>
+                <input type="number" data-field="split" min="0" max="100" placeholder="% (opt)" class="rounded-lg border border-atly-border bg-atly-surface px-3 py-2 text-sm focus:border-atly-accent focus:outline-none focus:ring-2 focus:ring-atly-accent/30">
+            </div>
         </div>
+    </template>
+
+    <template id="bp-skill-chip-template">
+        <span class="bp-chip inline-flex items-center gap-1 rounded-md bg-atly-muted px-2 py-0.5 text-xs font-medium text-atly-ink" data-chip>
+            <span data-chip-label></span>
+            <button type="button" data-remove-chip class="-mr-0.5 rounded p-0.5 text-atly-ink-soft hover:bg-atly-card hover:text-red-600" aria-label="Remove skill">
+                <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+        </span>
     </template>
 
     @push('scripts')
@@ -255,8 +300,10 @@
             window.atlyBlueprint = {
                 generateUrl: @json(route('blueprint.generate')),
                 storeUrl: @json(route('blueprint.store')),
+                draftStoreUrl: @json(route('blueprint.drafts.store')),
+                draftsIndexUrl: @json(route('blueprint.drafts.index')),
                 csrf: @json(csrf_token()),
-                priorities: @json(\App\Enums\TaskPriority::cases()),
+                priorities: @json(collect(\App\Enums\TaskPriority::cases())->map(fn ($p) => ['value' => $p->value, 'label' => $p->label()])->values()),
                 hasAvailableModels: @json($hasAvailableModels),
             };
         </script>

@@ -74,7 +74,7 @@ class Invitation extends Model
 
         return match (true) {
             $invitable instanceof Task => $invitable->title,
-            $invitable instanceof Project, $invitable instanceof Workspace => $invitable->name,
+            $invitable instanceof Project, $invitable instanceof Workspace, $invitable instanceof BlueprintDraft => $invitable->name,
             default => class_basename($invitable),
         };
     }
@@ -85,6 +85,7 @@ class Invitation extends Model
             Task::class => 'task',
             Project::class => 'project',
             Workspace::class => 'workspace',
+            BlueprintDraft::class => 'blueprint',
             default => 'item',
         };
     }

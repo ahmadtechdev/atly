@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InvitationStatus;
 use App\Enums\MembershipRole;
+use App\Models\BlueprintDraft;
 use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Task;
@@ -23,6 +24,11 @@ class InvitationService
         Task::class => ['table' => 'task_collaborators', 'foreign' => 'task_id'],
         Project::class => ['table' => 'project_members', 'foreign' => 'project_id'],
         Workspace::class => ['table' => 'workspace_members', 'foreign' => 'workspace_id'],
+    ];
+
+    /** @var array<int, class-string<Model>> Targets that handle their own acceptance logic instead of pivot writes. */
+    private const CUSTOM_TARGETS = [
+        BlueprintDraft::class,
     ];
 
     /**
@@ -45,7 +51,7 @@ class InvitationService
         $email = strtolower(trim($email));
         $type = $invitable::class;
 
-        if (! array_key_exists($type, self::TARGETS)) {
+        if (! array_key_exists($type, self::TARGETS) && ! in_array($type, self::CUSTOM_TARGETS, true)) {
             throw ValidationException::withMessages(['email' => 'This entity cannot be invited to.']);
         }
 
@@ -97,21 +103,25 @@ class InvitationService
         $this->assertActionable($invitation);
 
         DB::transaction(function () use ($invitation, $user): void {
-            $target = self::TARGETS[$invitation->invitable_type] ?? null;
+            if (in_array($invitation->invitable_type, self::CUSTOM_TARGETS, true)) {
+                $this->handleCustomAcceptance($invitation, $user);
+            } else {
+                $target = self::TARGETS[$invitation->invitable_type] ?? null;
 
-            if ($target === null) {
-                throw ValidationException::withMessages(['invitation' => 'This invitation target is invalid.']);
+                if ($target === null) {
+                    throw ValidationException::withMessages(['invitation' => 'This invitation target is invalid.']);
+                }
+
+                DB::table($target['table'])->updateOrInsert(
+                    [$target['foreign'] => $invitation->invitable_id, 'user_id' => $user->id],
+                    [
+                        'role' => $invitation->role,
+                        'invited_by' => $invitation->inviter_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ],
+                );
             }
-
-            DB::table($target['table'])->updateOrInsert(
-                [$target['foreign'] => $invitation->invitable_id, 'user_id' => $user->id],
-                [
-                    'role' => $invitation->role,
-                    'invited_by' => $invitation->inviter_id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-            );
 
             $invitation->update([
                 'invitee_id' => $user->id,
@@ -127,6 +137,10 @@ class InvitationService
     {
         $this->assertRecipient($invitation, $user);
         $this->assertActionable($invitation);
+
+        if (in_array($invitation->invitable_type, self::CUSTOM_TARGETS, true)) {
+            $this->handleCustomDecline($invitation, $user);
+        }
 
         $invitation->update([
             'invitee_id' => $user->id,
@@ -181,7 +195,29 @@ class InvitationService
                 || $invitable->members()->whereKey($user->id)->exists();
         }
 
+        if ($invitable instanceof BlueprintDraft) {
+            return $invitable->user_id === $user->id;
+        }
+
         return false;
+    }
+
+    private function handleCustomAcceptance(Invitation $invitation, User $user): void
+    {
+        $invitable = $invitation->invitable()->first();
+
+        if ($invitable instanceof BlueprintDraft) {
+            app(BlueprintDraftService::class)->handleAcceptance($invitable, $user);
+        }
+    }
+
+    private function handleCustomDecline(Invitation $invitation, User $user): void
+    {
+        $invitable = $invitation->invitable()->first();
+
+        if ($invitable instanceof BlueprintDraft) {
+            app(BlueprintDraftService::class)->handleDecline($invitable, $user);
+        }
     }
 
     private function assertRecipient(Invitation $invitation, User $user): void

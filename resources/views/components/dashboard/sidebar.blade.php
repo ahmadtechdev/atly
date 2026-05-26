@@ -1,12 +1,21 @@
 @php
     $pendingInvitationsCount = $pendingInvitationsCount ?? 0;
+    $activeDraftsCount = 0;
+
+    if (auth()->check()) {
+        $activeDraftsCount = \App\Models\BlueprintDraft::query()
+            ->forUser(auth()->user())
+            ->active()
+            ->count();
+    }
 
     $nav = [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home', 'active' => request()->routeIs('dashboard')],
         ['label' => 'Tasks', 'route' => 'tasks.index', 'icon' => 'tasks', 'active' => request()->routeIs('tasks.*'), 'addAction' => 'data-open-task-modal', 'addTitle' => 'Add task'],
         ['label' => 'Projects', 'route' => 'projects.index', 'icon' => 'projects', 'active' => request()->routeIs('projects.*'), 'addAction' => 'data-open-project-modal', 'addTitle' => 'Add project'],
         ['label' => 'Workspaces', 'route' => 'workspaces.index', 'icon' => 'workspaces', 'active' => request()->routeIs('workspaces.*'), 'addAction' => 'data-open-workspace-modal', 'addTitle' => 'Add workspace'],
-        ['label' => 'AI Blueprint', 'route' => 'blueprint.index', 'icon' => 'blueprint', 'active' => request()->routeIs('blueprint.*')],
+        ['label' => 'AI Blueprint', 'route' => 'blueprint.index', 'icon' => 'blueprint', 'active' => request()->routeIs('blueprint.index') || request()->routeIs('blueprint.generate') || request()->routeIs('blueprint.store')],
+        ['label' => 'Blueprint Drafts', 'route' => 'blueprint.drafts.index', 'icon' => 'blueprint-drafts', 'active' => request()->routeIs('blueprint.drafts.*'), 'badge' => $activeDraftsCount],
         ['label' => 'Time Tracker', 'route' => 'time-tracker.index', 'icon' => 'timer', 'active' => request()->routeIs('time-tracker.*')],
         ['label' => 'Invitations', 'route' => 'invitations.index', 'icon' => 'invitations', 'active' => request()->routeIs('invitations.*'), 'badge' => $pendingInvitationsCount],
         ['label' => 'Profile', 'route' => 'profile.edit', 'icon' => 'profile', 'active' => request()->routeIs('profile.*')],

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BlueprintController;
+use App\Http\Controllers\BlueprintDraftController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
@@ -79,6 +80,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('blueprint', [BlueprintController::class, 'index'])->name('blueprint.index');
     Route::post('blueprint/generate', [BlueprintController::class, 'generate'])->name('blueprint.generate');
     Route::post('blueprint', [BlueprintController::class, 'store'])->name('blueprint.store');
+
+    Route::get('blueprint/drafts', [BlueprintDraftController::class, 'index'])->name('blueprint.drafts.index');
+    Route::post('blueprint/drafts', [BlueprintDraftController::class, 'store'])->name('blueprint.drafts.store');
+    Route::get('blueprint/drafts/{draft}', [BlueprintDraftController::class, 'show'])->name('blueprint.drafts.show');
+    Route::put('blueprint/drafts/{draft}', [BlueprintDraftController::class, 'update'])->name('blueprint.drafts.update');
+    Route::post('blueprint/drafts/{draft}/invite', [BlueprintDraftController::class, 'invite'])->name('blueprint.drafts.invite');
+    Route::post('blueprint/drafts/{draft}/finalize', [BlueprintDraftController::class, 'finalize'])->name('blueprint.drafts.finalize');
+    Route::delete('blueprint/drafts/{draft}', [BlueprintDraftController::class, 'destroy'])->name('blueprint.drafts.destroy');
 
     Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');
     Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');

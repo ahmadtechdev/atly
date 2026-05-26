@@ -36,7 +36,7 @@ beforeEach(function () {
         ],
         'gemini-flash' => [
             'provider' => 'gemini',
-            'model' => 'gemini-1.5-flash-latest',
+            'model' => 'gemini-3.5-flash',
             'label' => 'Gemini Flash',
             'tagline' => '',
             'enabled' => true,

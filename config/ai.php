@@ -64,8 +64,8 @@ return [
 
         'gemini-flash' => [
             'provider' => 'gemini',
-            'model' => 'gemini-1.5-flash-latest',
-            'label' => 'Gemini 1.5 Flash',
+            'model' => 'gemini-3.5-flash',
+            'label' => 'Gemini 3.5 Flash',
             'tagline' => 'Generous free tier — fast.',
             'enabled' => true,
             'monthly_limit' => null,
@@ -73,8 +73,8 @@ return [
 
         'gemini-pro' => [
             'provider' => 'gemini',
-            'model' => 'gemini-1.5-pro-latest',
-            'label' => 'Gemini 1.5 Pro',
+            'model' => 'gemini-3.5-pro',
+            'label' => 'Gemini 3.5 Pro',
             'tagline' => 'Stronger reasoning.',
             'enabled' => false,
             'monthly_limit' => 50,

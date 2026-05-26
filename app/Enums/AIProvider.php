@@ -21,7 +21,7 @@ enum AIProvider: string
     {
         return match ($this) {
             self::OpenAI => 'gpt-4o-mini',
-            self::Gemini => 'gemini-1.5-flash-latest',
+            self::Gemini => 'gemini-3.5-flash',
             self::Claude => 'claude-3-5-sonnet-latest',
         };
     }

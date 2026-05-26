@@ -3,6 +3,10 @@ import { messageFromResponse, notifyError, notifySuccess } from './notify';
 const state = {
     project: null,
     tasks: [],
+    members: [],
+    assignmentType: 'individual',
+    startDate: null,
+    endDate: null,
 };
 
 let priorities = [];
@@ -71,6 +75,82 @@ function addMemberRow() {
     clone.querySelector('[data-remove-member]')?.addEventListener('click', () => {
         clone.remove();
     });
+
+    initSkillTagInput(clone);
+}
+
+function initSkillTagInput(row) {
+    const wrapper = row.querySelector('[data-skill-tags]');
+    const input = row.querySelector('[data-skill-input]');
+    if (!wrapper || !input) return;
+
+    wrapper.addEventListener('click', (event) => {
+        if (event.target === wrapper) input.focus();
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === ' ' || event.key === 'Enter' || event.key === ',') {
+            const value = input.value.trim();
+            if (value !== '') {
+                event.preventDefault();
+                addSkillChip(wrapper, input, value);
+                input.value = '';
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+            }
+        } else if (event.key === 'Backspace' && input.value === '') {
+            const chips = wrapper.querySelectorAll('[data-chip]');
+            const last = chips[chips.length - 1];
+            if (last) {
+                event.preventDefault();
+                last.remove();
+            }
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        const value = input.value.trim();
+        if (value !== '') {
+            addSkillChip(wrapper, input, value);
+            input.value = '';
+        }
+    });
+}
+
+function addSkillChip(wrapper, input, rawValue) {
+    const value = rawValue.replace(/[,]+$/g, '').trim();
+    if (value === '') return;
+
+    const existing = Array.from(wrapper.querySelectorAll('[data-chip-label]')).map((s) =>
+        s.textContent.trim().toLowerCase(),
+    );
+    if (existing.includes(value.toLowerCase())) return;
+
+    const template = el('bp-skill-chip-template');
+    if (!template) return;
+
+    const chip = template.content.firstElementChild.cloneNode(true);
+    chip.querySelector('[data-chip-label]').textContent = value;
+    chip.querySelector('[data-remove-chip]').addEventListener('click', () => chip.remove());
+
+    wrapper.insertBefore(chip, input);
+}
+
+function collectSkillsFromRow(row) {
+    return Array.from(row.querySelectorAll('[data-chip-label]'))
+        .map((s) => s.textContent.trim())
+        .filter((v) => v !== '');
+}
+
+function flushPendingSkillInput(row) {
+    const wrapper = row.querySelector('[data-skill-tags]');
+    const input = row.querySelector('[data-skill-input]');
+    if (!wrapper || !input) return;
+    const value = input.value.trim();
+    if (value !== '') {
+        addSkillChip(wrapper, input, value);
+        input.value = '';
+    }
 }
 
 function renderTasks() {
@@ -91,12 +171,8 @@ function renderTasks() {
         return;
     }
 
-    const priorityOptions = priorities
-        .map((p) => `<option value="${escapeHtml(p.value)}">${escapeHtml(p.name)}</option>`)
-        .join('');
-
     list.innerHTML = state.tasks
-        .map((task, index) => taskCardHtml(task, index, priorityOptions))
+        .map((task, index) => taskCardHtml(task, index))
         .join('');
 
     list.querySelectorAll('[data-task-row]').forEach((row) => {
@@ -116,7 +192,7 @@ function renderTasks() {
     });
 }
 
-function taskCardHtml(task, index, priorityOptions) {
+function taskCardHtml(task, index) {
     return `
         <div class="rounded-xl border border-atly-border bg-atly-surface p-4" data-task-row data-index="${index}">
             <div class="flex items-start justify-between gap-3">
@@ -156,7 +232,7 @@ function taskCardHtml(task, index, priorityOptions) {
                         ${priorities
                             .map(
                                 (p) =>
-                                    `<option value="${escapeHtml(p.value)}" ${task.priority === p.value ? 'selected' : ''}>${escapeHtml(p.name)}</option>`,
+                                    `<option value="${escapeHtml(p.value)}" ${task.priority === p.value ? 'selected' : ''}>${escapeHtml(p.label)}</option>`,
                             )
                             .join('')}
                     </select>
@@ -181,17 +257,59 @@ function taskCardHtml(task, index, priorityOptions) {
     `;
 }
 
+const LOADER_MESSAGES = [
+    'Analyzing your brief…',
+    'Mapping milestones…',
+    'Sequencing dependencies…',
+    'Estimating effort…',
+    'Polishing the plan…',
+];
+
+let loaderTimer = null;
+
 function setLoading(loading) {
     const btn = el('bp-generate-btn');
     const label = el('bp-generate-label');
-    if (!btn) return;
+    const overlay = el('bp-loading-overlay');
+    const text = el('bp-loader-text');
 
     if (loading) {
-        btn.setAttribute('disabled', 'disabled');
+        btn?.setAttribute('disabled', 'disabled');
         if (label) label.textContent = 'Generating…';
+
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        if (text) {
+            let i = 0;
+            text.textContent = LOADER_MESSAGES[0];
+            clearInterval(loaderTimer);
+            loaderTimer = setInterval(() => {
+                i = (i + 1) % LOADER_MESSAGES.length;
+                text.style.opacity = '0';
+                setTimeout(() => {
+                    text.textContent = LOADER_MESSAGES[i];
+                    text.style.opacity = '1';
+                }, 200);
+            }, 2200);
+        }
     } else {
-        btn.removeAttribute('disabled');
+        btn?.removeAttribute('disabled');
         if (label) label.textContent = 'Generate plan';
+
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        clearInterval(loaderTimer);
+        loaderTimer = null;
+        if (text) {
+            text.style.opacity = '1';
+            text.textContent = LOADER_MESSAGES[0];
+        }
     }
 }
 
@@ -201,6 +319,15 @@ function showDraft() {
 
     el('bp-project-name').value = state.project?.name ?? '';
     el('bp-project-description').value = state.project?.description ?? '';
+
+    const isTeam = state.assignmentType === 'team';
+    el('bp-team-banner')?.classList.toggle('hidden', !isTeam);
+    const finalizeLabel = el('bp-finalize-label');
+    if (finalizeLabel) {
+        finalizeLabel.textContent = isTeam
+            ? 'Send invitations & save draft'
+            : 'Confirm & create project';
+    }
 
     renderTasks();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -218,15 +345,38 @@ async function handleGenerate(event) {
     const errors = el('bp-form-errors');
     showErrors(errors, null);
 
+    document.querySelectorAll('[data-member-row]').forEach((row) => flushPendingSkillInput(row));
+
     const formData = new FormData(form);
 
+    state.members = [];
+    state.assignmentType = document.querySelector('input[name="assignment_type"]:checked')?.value || 'individual';
+    state.startDate = form.querySelector('input[name="start_date"]').value;
+    state.endDate = form.querySelector('input[name="end_date"]').value;
+
     document.querySelectorAll('[data-member-row]').forEach((row, index) => {
-        ['name', 'skill', 'split'].forEach((field) => {
+        const member = { name: '', email: '', skills: '', split: null };
+
+        ['name', 'split', 'email'].forEach((field) => {
             const input = row.querySelector(`[data-field="${field}"]`);
             if (input && input.value !== '') {
-                formData.append(`members[${index}][${field}]`, input.value);
+                member[field] = input.value;
+                if (field !== 'email') {
+                    formData.append(`members[${index}][${field}]`, input.value);
+                }
             }
         });
+
+        const skills = collectSkillsFromRow(row);
+        if (skills.length > 0) {
+            const joined = skills.join(', ');
+            member.skills = joined;
+            formData.append(`members[${index}][skill]`, joined);
+        }
+
+        if (member.name) {
+            state.members.push(member);
+        }
     });
 
     setLoading(true);
@@ -261,7 +411,7 @@ async function handleGenerate(event) {
     }
 }
 
-async function handleFinalize() {
+function collectReviewPayload() {
     const errors = el('bp-finalize-errors');
     showErrors(errors, null);
 
@@ -272,57 +422,145 @@ async function handleFinalize() {
 
     if (!projectName) {
         showErrors(errors, ['Project name is required.']);
-        return;
+        return null;
     }
 
     if (state.tasks.length === 0) {
         showErrors(errors, ['Add at least one task before saving.']);
-        return;
+        return null;
     }
 
-    const payload = {
+    return {
         project: {
             name: projectName,
             description: projectDescription || null,
             color,
         },
         workspace_id: workspaceId || null,
+        assignment_type: state.assignmentType,
+        start_date: state.startDate,
+        end_date: state.endDate,
         tasks: state.tasks.map((task) => ({
             title: task.title,
             description: task.description || null,
             priority: task.priority,
             start_date: task.start_date,
             due_date: task.due_date,
+            assigned_to: task.assigned_to || null,
+            milestone: task.milestone || null,
+            skill_required: task.skill_required || null,
+            estimated_hours: task.estimated_hours || null,
+        })),
+        members: state.members.map((m) => ({
+            name: m.name,
+            email: m.email || null,
+            skills: m.skills || null,
+            split: m.split !== '' && m.split !== null ? Number(m.split) : null,
         })),
     };
+}
+
+async function postJson(url, payload) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': window.atlyBlueprint.csrf,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    return { ok: response.ok, data };
+}
+
+async function handleFinalize() {
+    const payload = collectReviewPayload();
+    if (!payload) return;
+
+    const isTeam = state.assignmentType === 'team';
+    const errors = el('bp-finalize-errors');
+
+    if (isTeam) {
+        const missingEmails = payload.members.filter((m) => !m.email);
+        if (payload.members.length === 0 || missingEmails.length > 0) {
+            showErrors(errors, ['Every team member needs an email so we can send their invitation.']);
+            return;
+        }
+    }
 
     const btn = el('bp-finalize-btn');
     btn?.setAttribute('disabled', 'disabled');
 
     try {
-        const response = await fetch(window.atlyBlueprint.storeUrl, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': window.atlyBlueprint.csrf,
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            const list = flattenValidationErrors(data);
-            showErrors(errors, list.length ? list : [data.message || 'Could not save project.']);
+        if (!isTeam) {
+            const { ok, data } = await postJson(window.atlyBlueprint.storeUrl, {
+                project: payload.project,
+                workspace_id: payload.workspace_id,
+                tasks: payload.tasks.map((t) => ({
+                    title: t.title,
+                    description: t.description,
+                    priority: t.priority,
+                    start_date: t.start_date,
+                    due_date: t.due_date,
+                })),
+            });
+            if (!ok) {
+                const list = flattenValidationErrors(data);
+                showErrors(errors, list.length ? list : [data.message || 'Could not save project.']);
+                return;
+            }
+            notifySuccess(data.message || 'Project created.');
+            window.location.href = data.redirect;
             return;
         }
 
-        notifySuccess(data.message || 'Project created.');
+        const { ok, data } = await postJson(window.atlyBlueprint.draftStoreUrl, payload);
+        if (!ok) {
+            const list = flattenValidationErrors(data);
+            showErrors(errors, list.length ? list : [data.message || 'Could not save draft.']);
+            return;
+        }
+
+        const inviteUrl = `${window.atlyBlueprint.draftsIndexUrl}/${data.draft.id}/invite`;
+        const inviteResp = await postJson(inviteUrl, {});
+        if (!inviteResp.ok) {
+            const list = flattenValidationErrors(inviteResp.data);
+            notifyError(list.length ? list[0] : 'Draft saved, but invitations failed.');
+            window.location.href = data.redirect;
+            return;
+        }
+
+        notifySuccess('Draft saved & invitations sent.');
         window.location.href = data.redirect;
     } catch (err) {
         showErrors(errors, ['Network error. Please try again.']);
+    } finally {
+        btn?.removeAttribute('disabled');
+    }
+}
+
+async function handleSaveDraft() {
+    const payload = collectReviewPayload();
+    if (!payload) return;
+
+    const btn = el('bp-save-draft-btn');
+    btn?.setAttribute('disabled', 'disabled');
+
+    try {
+        const { ok, data } = await postJson(window.atlyBlueprint.draftStoreUrl, payload);
+        if (!ok) {
+            const list = flattenValidationErrors(data);
+            showErrors(el('bp-finalize-errors'), list.length ? list : [data.message || 'Could not save draft.']);
+            return;
+        }
+        notifySuccess('Draft saved.');
+        window.location.href = data.redirect;
+    } catch (err) {
+        showErrors(el('bp-finalize-errors'), ['Network error. Please try again.']);
     } finally {
         btn?.removeAttribute('disabled');
     }
@@ -372,6 +610,7 @@ export function initBlueprint() {
     });
 
     el('bp-finalize-btn')?.addEventListener('click', handleFinalize);
+    el('bp-save-draft-btn')?.addEventListener('click', handleSaveDraft);
 
     renderTeamMembers();
 }
