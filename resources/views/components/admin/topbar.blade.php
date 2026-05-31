@@ -36,7 +36,7 @@
                 </svg>
             </a>
             <x-theme.toggle />
-            <form method="POST" action="{{ route('admin.logout') }}">
+            <form method="POST" action="{{ route('admin.logout') }}" class="shrink-0">
                 @csrf
                 <x-landing.button type="submit" variant="secondary" class="!px-2.5 !py-1.5 text-xs sm:!px-4 sm:!py-2">Log out</x-landing.button>
             </form>

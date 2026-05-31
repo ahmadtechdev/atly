@@ -5,7 +5,7 @@
             <p class="mt-1 text-sm text-atly-ink-soft">Registered accounts on the platform (excluding super admin).</p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
             <x-dashboard.stat-card label="Total registered" :value="$userStats['total_registered']" :accent="true" />
             <x-dashboard.stat-card label="Verified" :value="$userStats['verified']" :hint="$userStats['verification_rate'].'% verified'" />
             <x-dashboard.stat-card

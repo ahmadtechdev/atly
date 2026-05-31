@@ -22,9 +22,21 @@ export function initSidebar() {
         return Boolean(document.querySelector('[id$="-modal"]:not(.hidden), #task-detail-drawer:not(.hidden)'));
     };
 
+    const isMobileViewport = () => window.innerWidth < MOBILE_BREAKPOINT;
+
     const setMobileOpen = (open) => {
         document.body.dataset.mobileSidebarOpen = open ? 'true' : 'false';
         mobileOpen?.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+        if (isMobileViewport()) {
+            sidebar.classList.toggle('translate-x-0', open);
+            sidebar.classList.toggle('-translate-x-full', ! open);
+            backdrop?.classList.toggle('hidden', ! open);
+            backdrop?.setAttribute('aria-hidden', open ? 'false' : 'true');
+        } else if (! open) {
+            backdrop?.classList.add('hidden');
+            backdrop?.setAttribute('aria-hidden', 'true');
+        }
 
         if (open) {
             document.body.classList.add('overflow-hidden');

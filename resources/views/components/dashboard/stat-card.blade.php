@@ -5,7 +5,7 @@
     'ring-1 ring-atly-accent/30' => $accent,
 ])>
     <p class="text-sm font-medium text-atly-ink-soft">{{ $label }}</p>
-    <p class="mt-2 font-display text-3xl font-bold text-atly-ink">{{ $value }}</p>
+    <p class="mt-2 font-display text-2xl font-bold text-atly-ink sm:text-3xl">{{ $value }}</p>
     @if ($hint)
         <p class="mt-1 text-xs text-atly-ink-soft">{{ $hint }}</p>
     @endif

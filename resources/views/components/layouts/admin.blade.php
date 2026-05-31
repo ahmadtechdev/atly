@@ -11,7 +11,7 @@
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700|plus-jakarta-sans:500,600,700,800" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-atly-surface" data-sidebar-collapsed="false">
+<body class="min-h-screen overflow-x-hidden bg-atly-surface" data-sidebar-collapsed="false">
     <script>
         try {
             if (localStorage.getItem('atly-sidebar-collapsed') === 'true') {

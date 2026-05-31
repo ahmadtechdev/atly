@@ -1,12 +1,12 @@
 <x-layouts.admin title="Settings">
     <div class="mx-auto max-w-lg">
         <div class="overflow-hidden rounded-atly-lg border border-atly-border bg-atly-card shadow-atly-lg">
-            <div class="border-b border-atly-border px-6 py-5 sm:px-8">
+            <div class="border-b border-atly-border px-4 py-5 sm:px-8">
                 <h2 class="font-display text-xl font-bold text-atly-ink">Account settings</h2>
                 <p class="mt-1 text-sm text-atly-ink-soft">Update your super admin password.</p>
             </div>
 
-            <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-5 p-6 sm:p-8">
+            <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-5 p-4 sm:p-8">
                 @csrf
                 @method('PUT')
 

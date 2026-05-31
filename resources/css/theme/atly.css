@@ -160,13 +160,15 @@ html.dark {
     }
 }
 
-/* Mobile sidebar drawer (< lg) */
-body[data-mobile-sidebar-open='true'] #dashboard-sidebar {
-    transform: translateX(0);
-}
+/* Mobile sidebar drawer (< lg) — Tailwind v4 uses `translate`, not `transform` */
+@media (max-width: 1023.98px) {
+    body[data-mobile-sidebar-open='true'] #dashboard-sidebar {
+        translate: 0;
+    }
 
-body[data-mobile-sidebar-open='true'] #dashboard-sidebar-backdrop {
-    display: block;
+    body[data-mobile-sidebar-open='true'] #dashboard-sidebar-backdrop {
+        display: block;
+    }
 }
 
 /* Task detail: description scrolls vertically only, text wraps */
