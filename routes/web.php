@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [ResetPasswordController::class, 'store'])->name('password.update');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'not-super-admin'])->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');

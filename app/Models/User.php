@@ -22,6 +22,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'avatar_path',
+        'is_super_admin',
     ];
 
     protected $hidden = [
@@ -34,6 +35,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_super_admin' => 'boolean',
         ];
     }
 
@@ -108,6 +110,11 @@ class User extends Authenticatable implements JWTSubject
         $parts = preg_split('/\s+/', trim($this->name)) ?: [];
 
         return strtoupper(collect($parts)->take(2)->map(fn (string $part) => substr($part, 0, 1))->implode(''));
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
     }
 
     public function hasVerifiedEmail(): bool

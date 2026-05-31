@@ -38,6 +38,10 @@ class LoginController extends Controller
                 ->with('status', 'Please verify your email before signing in.');
         }
 
+        if ($user?->isSuperAdmin()) {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 }
